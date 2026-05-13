@@ -599,6 +599,8 @@ const S = {
     editCanvas: null, editCtx: null,
     // Ref image
     refImgLoaded: null,
+    // Cloud config
+    cloud: {},
 };
 
 const defaultColors = [
@@ -740,7 +742,8 @@ function updateAuthUI() {
     document.getElementById('userInfo').style.display = 'flex';
     document.getElementById('userDisplayName').textContent = S.currentUser;
     document.getElementById('userAvatar').textContent = S.currentUser.charAt(0).toUpperCase();
-    document.getElementById('syncBtn').style.display = isCloudEnabled() ? '' : 'none';
+    var cloudOn = isCloudEnabled();
+    document.getElementById('syncBtn').style.display = cloudOn ? '' : 'none';
 }
 async function loadUserData() {
     if (!S.currentUser) return;
@@ -750,12 +753,18 @@ async function loadUserData() {
         data = await cloudLoad();
         if (data) {
             showToast('已从云端同步数据');
-            // Also sync to localStorage as cache
+            // Cache to localStorage
             localStorage.setItem('knit_data_' + S.currentUser, JSON.stringify({
                 subPatterns: data.subPatterns || [],
                 fullPatterns: data.fullPatterns || [],
                 projects: data.projects || []
             }));
+            // Mark as successfully synced
+            localStorage.setItem('knit_cloud_synced_' + S.currentUser, 'true');
+        } else {
+            // Only show warning if we've never successfully synced before
+            var hasSynced = localStorage.getItem('knit_cloud_synced_' + S.currentUser);
+            if (!hasSynced) showToast('云端同步失败，使用本地数据');
         }
     }
     // Fallback to localStorage
@@ -772,8 +781,18 @@ async function loadUserData() {
 // ==================== Cloud Storage (Supabase) ====================
 function isCloudEnabled() { return !!(S.cloud && S.cloud.projectId && S.cloud.apiKey && S.cloud.enabled); }
 function loadCloudConfig() {
-    try { const s = localStorage.getItem('knit_cloud_config'); if (s) S.cloud = JSON.parse(s); } catch(e){}
-    if (!S.cloud) S.cloud = {};
+    var parsed = null;
+    try { 
+        var s = localStorage.getItem('knit_cloud_config'); 
+        if (s) parsed = JSON.parse(s); 
+    } catch(e){}
+    // Only update if we got valid config from localStorage; preserve existing S.cloud otherwise
+    if (parsed && parsed.projectId && parsed.apiKey) {
+        S.cloud = parsed;
+    } else if (!S.cloud || !S.cloud.projectId) {
+        // Ensure S.cloud is at least an empty object
+        S.cloud = {};
+    }
 }
 function toggleCloudConfig() { var p = document.getElementById('cloudConfigPanel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
 function showSqlHelp() {
@@ -815,9 +834,16 @@ function saveCloudConfig() {
     var s = document.getElementById('cloudStatus');
     if (!ref || !key) { s.textContent = '\u274C \u8bf7\u586b\u5199\u5b8c\u6574'; return; }
     S.cloud = { projectId: ref, apiKey: key, enabled: true };
-    localStorage.setItem('knit_cloud_config', JSON.stringify(S.cloud));
+    try {
+        localStorage.setItem('knit_cloud_config', JSON.stringify(S.cloud));
+    } catch(e) {
+        s.textContent = '\u274C \u4fdd\u5b58\u5931\u8d25\uff1a' + e.message;
+        return;
+    }
     s.textContent = '\u2705 \u914d\u7f6e\u5df2\u4fdd\u5b58';
     showToast('\u4e91\u7aef\u914d\u7f6e\u5df2\u4fdd\u5b58');
+    // Update sync button visibility immediately if user is logged in
+    if (S.currentUser) updateAuthUI();
 }
 function removeCloudConfig() { S.cloud = {}; localStorage.removeItem('knit_cloud_config'); }
 
@@ -1541,7 +1567,10 @@ function handleProjectAction() {
 }
 
 // ==================== Init ====================
+var _initCalled = false;
 function init() {
+    if (_initCalled) { console.warn('init() called twice, skipping'); return; }
+    _initCalled = true;
     initPalettes();
     loadCloudConfig(); // Load cloud settings from localStorage
     if (S.cloud && S.cloud.projectId) {
