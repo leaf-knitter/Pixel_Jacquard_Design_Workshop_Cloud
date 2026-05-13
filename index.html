@@ -601,6 +601,8 @@ const S = {
     refImgLoaded: null,
     // Cloud config
     cloud: {},
+    // Data loading flag - prevents cloud overwrite before initial load completes
+    _dataLoaded: false,
 };
 
 const defaultColors = [
@@ -746,7 +748,7 @@ function updateAuthUI() {
     document.getElementById('syncBtn').style.display = cloudOn ? '' : 'none';
 }
 async function loadUserData() {
-    if (!S.currentUser) return;
+    if (!S.currentUser) { S._dataLoaded = true; return; }
     var data = null;
     // Try cloud first if enabled
     if (isCloudEnabled()) {
@@ -754,7 +756,7 @@ async function loadUserData() {
         try {
             data = await cloudLoad();
         } catch(e) { data = null; }
-        if (data) {
+        if (data && data._loaded) {
             showToast('\u2705 \u5df2\u4ece\u4e91\u7aef\u540c\u6b65\u6570\u636e');
             // Cache to localStorage
             try {
@@ -773,13 +775,16 @@ async function loadUserData() {
         }
     }
     // Fallback to localStorage
-    if (!data) {
+    if (!data || !data._loaded) {
         try { data = JSON.parse(localStorage.getItem('knit_data_' + S.currentUser) || '{}'); } catch(e) { data = {}; }
     }
     if (data.subPatterns) S.subPatterns = data.subPatterns.map(p => ({...p, imageData: deserializeImageData(p.imageData)}));
+    else S.subPatterns = [];
     if (data.fullPatterns) S.fullPatterns = data.fullPatterns.map(p => ({...p, imageData: deserializeImageData(p.imageData)}));
+    else S.fullPatterns = [];
     S.projects = data.projects || [];
     updateSubPatternPool();
+    S._dataLoaded = true;
 }
 
 // ==================== Cloud Storage (Supabase) ====================
@@ -884,37 +889,69 @@ async function supaInsert(username, passwordHash) {
         return r.ok || r.status === 201;
     } catch(e) { return false; }
 }
-async function supaUpdate(username, payload) {
-    var c = _supaCfg(); if (!c) return false;
+// Write data to cloud (internal helper)
+async function _cloudWrite(payload) {
+    var c = _supaCfg(); if (!c) return { ok: false, error: 'not configured' };
     try {
         var body = { data: payload, updated_at: new Date().toISOString() };
-        var pass = localStorage.getItem('knit_pass_' + username); if (pass) body.password = pass;
-        var r = await fetchWithTimeout('https://' + c.ref + '.supabase.co/rest/v1/users?username=eq.' + encodeURIComponent(username), { method: 'PATCH', headers: _supaHeaders(), body: JSON.stringify(body) });
-        return r.ok;
-    } catch(e) { return false; }
+        var r = await fetchWithTimeout('https://' + c.ref + '.supabase.co/rest/v1/users?username=eq.' + encodeURIComponent(S.currentUser), { method: 'PATCH', headers: _supaHeaders(), body: JSON.stringify(body) }, 15000);
+        if (r.ok) return { ok: true };
+        var respText = '';
+        try { respText = await r.text(); } catch(e){}
+        return { ok: false, status: r.status, error: respText.substring(0, 100) };
+    } catch(e) {
+        if (e.name === 'AbortError') return { ok: false, timeout: true };
+        return { ok: false, error: e.message || 'network error' };
+    }
 }
+// Merge two pattern arrays by name+createdAt to avoid overwriting
+function _mergePatterns(localArr, remoteArr) {
+    if (!remoteArr || !remoteArr.length) return localArr || [];
+    if (!localArr || !localArr.length) return remoteArr || [];
+    var merged = localArr.slice(); // start with local
+    var key = function(p) { return (p.name || '') + '|' + (p.createdAt || ''); };
+    var localKeys = {};
+    for (var i = 0; i < localArr.length; i++) localKeys[key(localArr[i])] = true;
+    // Add remote patterns not in local
+    for (var j = 0; j < remoteArr.length; j++) {
+        if (!localKeys[key(remoteArr[j])]) merged.push(remoteArr[j]);
+    }
+    return merged;
+}
+
 async function cloudSave() {
     if (!isCloudEnabled() || !S.currentUser) return false;
-    var c = _supaCfg(); if (!c) return false;
+    // Guard: don't upload until initial data load is complete
+    if (!S._dataLoaded) { console.log('cloudSave blocked: data not loaded yet'); return false; }
+    // Read-merge-write: fetch remote data first, merge, then write
     try {
-        var body = { data: { subPatterns: S.subPatterns, fullPatterns: S.fullPatterns, projects: S.projects }, updated_at: new Date().toISOString() };
-        var pass = localStorage.getItem('knit_pass_' + S.currentUser); if (pass) body.password = pass;
-        var r = await fetchWithTimeout('https://' + c.ref + '.supabase.co/rest/v1/users?username=eq.' + encodeURIComponent(S.currentUser), { method: 'PATCH', headers: _supaHeaders(), body: JSON.stringify(body) }, 15000);
-        return r.ok;
+        var row = await supaSelect(S.currentUser);
+        var remote = (row && row.data) ? row.data : {};
+        var merged = {
+            subPatterns: _mergePatterns(S.subPatterns, remote.subPatterns),
+            fullPatterns: _mergePatterns(S.fullPatterns, remote.fullPatterns),
+            projects: _mergePatterns(S.projects, remote.projects)
+        };
+        var result = await _cloudWrite(merged);
+        if (result.ok) console.log('Cloud save OK (merged)');
+        else console.log('Cloud save failed:', result.error || result.status);
+        return result.ok;
     } catch(e) { return false; }
 }
 async function cloudLoad() {
-    if (!isCloudEnabled() || !S.currentUser) return null;
+    if (!isCloudEnabled() || !S.currentUser) return { _loaded: false };
     try {
-        var row = await supaSelect(S.currentUser); if (!row) return null;
+        var row = await supaSelect(S.currentUser); 
+        if (!row) return { _loaded: false };
         var d = row.data || {};
-        return { password: row.password, subPatterns: d.subPatterns || [], fullPatterns: d.fullPatterns || [], projects: d.projects || [] };
-    } catch(e) { return null; }
+        return { _loaded: true, password: row.password, subPatterns: d.subPatterns || [], fullPatterns: d.fullPatterns || [], projects: d.projects || [] };
+    } catch(e) { return { _loaded: false }; }
 }
 
 async function syncToCloud() {
     if (!isCloudEnabled()) { showToast('\u672a\u914d\u7f6e\u4e91\u7aef\uff0c\u8bf7\u5148\u914d\u7f6e Supabase'); return; }
     if (!S.currentUser) { showToast('\u8bf7\u5148\u767b\u5f55'); return; }
+    if (!S._dataLoaded) { showToast('\u{1F504} \u6b63\u5728\u52a0\u8f7d\u6570\u636e\uff0c\u8bf7\u7a0d\u540e...'); return; }
     var btn = document.getElementById('syncBtn');
     var orig = btn.innerHTML;
     btn.innerHTML = '\u{1F504} \u540c\u6b65\u4e2d...';
@@ -923,6 +960,8 @@ async function syncToCloud() {
         var result = await cloudSaveDetailed();
         if (result.ok) {
             showToast('\u2705 \u5df2\u540c\u6b65\u5230\u4e91\u7aef');
+        } else if (result.error === 'data not loaded yet') {
+            showToast('\u{1F504} \u6570\u636e\u52a0\u8f7d\u4e2d\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5');
         } else if (result.timeout) {
             showToast('\u23F1 \u540c\u6b65\u8d85\u65f6\uff0c\u8bf7\u68c0\u67e5\u7f51\u7edc\u6216\u51cf\u5c11\u56fe\u7eb8\u6570\u91cf');
         } else if (result.status === 413) {
@@ -939,18 +978,19 @@ async function syncToCloud() {
     btn.disabled = false;
 }
 
-// Enhanced cloudSave with detailed error info
+// Enhanced cloudSave with detailed error info (uses merge strategy)
 async function cloudSaveDetailed() {
     if (!isCloudEnabled() || !S.currentUser) return { ok: false, error: 'not configured' };
-    var c = _supaCfg(); if (!c) return { ok: false, error: 'not configured' };
+    if (!S._dataLoaded) return { ok: false, error: 'data not loaded yet' };
     try {
-        var body = { data: { subPatterns: S.subPatterns, fullPatterns: S.fullPatterns, projects: S.projects }, updated_at: new Date().toISOString() };
-        var pass = localStorage.getItem('knit_pass_' + S.currentUser); if (pass) body.password = pass;
-        var r = await fetchWithTimeout('https://' + c.ref + '.supabase.co/rest/v1/users?username=eq.' + encodeURIComponent(S.currentUser), { method: 'PATCH', headers: _supaHeaders(), body: JSON.stringify(body) }, 15000);
-        if (r.ok) return { ok: true };
-        var respText = '';
-        try { respText = await r.text(); } catch(e){}
-        return { ok: false, status: r.status, error: respText.substring(0, 100) };
+        var row = await supaSelect(S.currentUser);
+        var remote = (row && row.data) ? row.data : {};
+        var merged = {
+            subPatterns: _mergePatterns(S.subPatterns, remote.subPatterns),
+            fullPatterns: _mergePatterns(S.fullPatterns, remote.fullPatterns),
+            projects: _mergePatterns(S.projects, remote.projects)
+        };
+        return await _cloudWrite(merged);
     } catch(e) {
         if (e.name === 'AbortError') return { ok: false, timeout: true };
         return { ok: false, error: e.message || 'network error' };
@@ -967,13 +1007,13 @@ async function saveToStorage() {
     } catch(e) {
         showToast('\u26A0 \u672c\u5730\u4fdd\u5b58\u5931\u8d25\uff1a\u6570\u636e\u8fc7\u5927\uff0c\u8bf7\u5220\u9664\u4e00\u4e9b\u56fe\u7eb8');
     }
-    // Also save to cloud if enabled (fire and forget with feedback)
-    if (isCloudEnabled()) {
+    // Also save to cloud if enabled and data has been loaded
+    if (isCloudEnabled() && S._dataLoaded) {
         try {
             var ok = await cloudSave();
-            if (!ok) showToast('\u26A0 \u4e91\u7aef\u4fdd\u5b58\u5931\u8d25\uff0c\u5df2\u4fdd\u5b58\u5230\u672c\u5730');
+            if (!ok) console.log('Cloud save skipped or failed, data kept in localStorage');
         } catch(e) {
-            showToast('\u26A0 \u4e91\u7aef\u4fdd\u5b58\u5f02\u5e38\uff0c\u5df2\u4fdd\u5b58\u5230\u672c\u5730');
+            console.log('Cloud save exception:', e.message);
         }
     }
 }
@@ -1624,7 +1664,7 @@ function handleProjectAction() {
 
 // ==================== Init ====================
 var _initCalled = false;
-function init() {
+async function init() {
     if (_initCalled) { console.warn('init() called twice, skipping'); return; }
     _initCalled = true;
     initPalettes();
@@ -1640,8 +1680,9 @@ function init() {
         document.getElementById('authPlaceholder').style.display = 'none';
         document.getElementById('navBar').style.display = '';
         updateAuthUI();
-        loadUserData();
+        await loadUserData(); // Wait for data load before allowing operations
     } else {
+        S._dataLoaded = true; // No user = no data to load, mark as ready
         document.getElementById('authModal').classList.remove('hidden');
         document.getElementById('navBar').style.display = 'none';
     }
