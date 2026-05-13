@@ -747,29 +747,34 @@ function updateAuthUI() {
 }
 async function loadUserData() {
     if (!S.currentUser) return;
-    let data = null;
+    var data = null;
     // Try cloud first if enabled
     if (isCloudEnabled()) {
-        data = await cloudLoad();
+        showToast('\u{1F504} \u6b63\u5728\u4ece\u4e91\u7aef\u52a0\u8f7d...');
+        try {
+            data = await cloudLoad();
+        } catch(e) { data = null; }
         if (data) {
-            showToast('已从云端同步数据');
+            showToast('\u2705 \u5df2\u4ece\u4e91\u7aef\u540c\u6b65\u6570\u636e');
             // Cache to localStorage
-            localStorage.setItem('knit_data_' + S.currentUser, JSON.stringify({
-                subPatterns: data.subPatterns || [],
-                fullPatterns: data.fullPatterns || [],
-                projects: data.projects || []
-            }));
-            // Mark as successfully synced
-            localStorage.setItem('knit_cloud_synced_' + S.currentUser, 'true');
+            try {
+                localStorage.setItem('knit_data_' + S.currentUser, JSON.stringify({
+                    subPatterns: data.subPatterns || [],
+                    fullPatterns: data.fullPatterns || [],
+                    projects: data.projects || []
+                }));
+                localStorage.setItem('knit_cloud_synced_' + S.currentUser, 'true');
+            } catch(e) {
+                showToast('\u26A0 \u672c\u5730\u7f13\u5b58\u5931\u8d25\uff0c\u6570\u636e\u8fc7\u5927');
+            }
         } else {
-            // Only show warning if we've never successfully synced before
             var hasSynced = localStorage.getItem('knit_cloud_synced_' + S.currentUser);
-            if (!hasSynced) showToast('云端同步失败，使用本地数据');
+            if (!hasSynced) showToast('\u26A0 \u4e91\u7aef\u52a0\u8f7d\u5931\u8d25\uff0c\u4f7f\u7528\u672c\u5730\u6570\u636e');
         }
     }
     // Fallback to localStorage
     if (!data) {
-        data = JSON.parse(localStorage.getItem('knit_data_' + S.currentUser) || '{}');
+        try { data = JSON.parse(localStorage.getItem('knit_data_' + S.currentUser) || '{}'); } catch(e) { data = {}; }
     }
     if (data.subPatterns) S.subPatterns = data.subPatterns.map(p => ({...p, imageData: deserializeImageData(p.imageData)}));
     if (data.fullPatterns) S.fullPatterns = data.fullPatterns.map(p => ({...p, imageData: deserializeImageData(p.imageData)}));
@@ -809,7 +814,7 @@ async function testCloudConnection() {
     s.textContent = '\u{1F504} \u6d4b\u8bd5\u4e2d...';
     try {
         var url = 'https://' + ref + '.supabase.co/rest/v1/users?select=count&limit=1';
-        var r = await fetch(url, { headers: { 'apikey': key, 'Authorization': 'Bearer ' + key } });
+        var r = await fetchWithTimeout(url, { headers: { 'apikey': key, 'Authorization': 'Bearer ' + key } }, 8000);
         if (r.ok) {
             s.innerHTML = '\u2705 \u8fde\u63a5\u6210\u529f\uff01\u53ef\u4ee5\u4fdd\u5b58\u914d\u7f6e\u3002';
         } else if (r.status === 404) {
@@ -851,10 +856,19 @@ function removeCloudConfig() { S.cloud = {}; localStorage.removeItem('knit_cloud
 function _supaCfg() { var c = S.cloud || {}; return (c.projectId && c.apiKey) ? { ref: c.projectId, key: c.apiKey } : null; }
 function _supaHeaders() { var c = _supaCfg(); return c ? { 'apikey': c.key, 'Authorization': 'Bearer ' + c.key, 'Content-Type': 'application/json' } : null; }
 
+// Fetch with timeout using AbortController
+function fetchWithTimeout(url, options, timeoutMs) {
+    timeoutMs = timeoutMs || 10000; // default 10s
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function() { controller.abort(); }, timeoutMs);
+    return fetch(url, Object.assign({}, options, { signal: controller.signal }))
+        .finally(function() { clearTimeout(timeoutId); });
+}
+
 async function supaSelect(username) {
     var c = _supaCfg(); if (!c) return null;
     try {
-        var r = await fetch('https://' + c.ref + '.supabase.co/rest/v1/users?username=eq.' + encodeURIComponent(username) + '&select=*&limit=1', { headers: { 'apikey': c.key, 'Authorization': 'Bearer ' + c.key } });
+        var r = await fetchWithTimeout('https://' + c.ref + '.supabase.co/rest/v1/users?username=eq.' + encodeURIComponent(username) + '&select=*&limit=1', { headers: { 'apikey': c.key, 'Authorization': 'Bearer ' + c.key } });
         if (!r.ok) return null;
         var rows = await r.json();
         return (rows && rows.length) ? rows[0] : null;
@@ -863,7 +877,7 @@ async function supaSelect(username) {
 async function supaInsert(username, passwordHash) {
     var c = _supaCfg(); if (!c) return false;
     try {
-        var r = await fetch('https://' + c.ref + '.supabase.co/rest/v1/users', {
+        var r = await fetchWithTimeout('https://' + c.ref + '.supabase.co/rest/v1/users', {
             method: 'POST', headers: _supaHeaders(),
             body: JSON.stringify({ username: username, password: passwordHash, data: {}, updated_at: new Date().toISOString() })
         });
@@ -875,19 +889,27 @@ async function supaUpdate(username, payload) {
     try {
         var body = { data: payload, updated_at: new Date().toISOString() };
         var pass = localStorage.getItem('knit_pass_' + username); if (pass) body.password = pass;
-        var r = await fetch('https://' + c.ref + '.supabase.co/rest/v1/users?username=eq.' + encodeURIComponent(username), { method: 'PATCH', headers: _supaHeaders(), body: JSON.stringify(body) });
+        var r = await fetchWithTimeout('https://' + c.ref + '.supabase.co/rest/v1/users?username=eq.' + encodeURIComponent(username), { method: 'PATCH', headers: _supaHeaders(), body: JSON.stringify(body) });
         return r.ok;
     } catch(e) { return false; }
 }
 async function cloudSave() {
     if (!isCloudEnabled() || !S.currentUser) return false;
-    return await supaUpdate(S.currentUser, { subPatterns: S.subPatterns, fullPatterns: S.fullPatterns, projects: S.projects });
+    var c = _supaCfg(); if (!c) return false;
+    try {
+        var body = { data: { subPatterns: S.subPatterns, fullPatterns: S.fullPatterns, projects: S.projects }, updated_at: new Date().toISOString() };
+        var pass = localStorage.getItem('knit_pass_' + S.currentUser); if (pass) body.password = pass;
+        var r = await fetchWithTimeout('https://' + c.ref + '.supabase.co/rest/v1/users?username=eq.' + encodeURIComponent(S.currentUser), { method: 'PATCH', headers: _supaHeaders(), body: JSON.stringify(body) }, 15000);
+        return r.ok;
+    } catch(e) { return false; }
 }
 async function cloudLoad() {
     if (!isCloudEnabled() || !S.currentUser) return null;
-    var row = await supaSelect(S.currentUser); if (!row) return null;
-    var d = row.data || {};
-    return { password: row.password, subPatterns: d.subPatterns || [], fullPatterns: d.fullPatterns || [], projects: d.projects || [] };
+    try {
+        var row = await supaSelect(S.currentUser); if (!row) return null;
+        var d = row.data || {};
+        return { password: row.password, subPatterns: d.subPatterns || [], fullPatterns: d.fullPatterns || [], projects: d.projects || [] };
+    } catch(e) { return null; }
 }
 
 async function syncToCloud() {
@@ -898,9 +920,18 @@ async function syncToCloud() {
     btn.innerHTML = '\u{1F504} \u540c\u6b65\u4e2d...';
     btn.disabled = true;
     try {
-        var ok = await cloudSave();
-        if (ok) showToast('\u2705 \u5df2\u540c\u6b65\u5230\u4e91\u7aef');
-        else showToast('\u274C \u540c\u6b65\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5\u7f51\u7edc');
+        var result = await cloudSaveDetailed();
+        if (result.ok) {
+            showToast('\u2705 \u5df2\u540c\u6b65\u5230\u4e91\u7aef');
+        } else if (result.timeout) {
+            showToast('\u23F1 \u540c\u6b65\u8d85\u65f6\uff0c\u8bf7\u68c0\u67e5\u7f51\u7edc\u6216\u51cf\u5c11\u56fe\u7eb8\u6570\u91cf');
+        } else if (result.status === 413) {
+            showToast('\u274C \u6570\u636e\u8fc7\u5927\uff0c\u8bf7\u5220\u9664\u4e00\u4e9b\u56fe\u7eb8\u540e\u91cd\u8bd5');
+        } else if (result.status === 401 || result.status === 403) {
+            showToast('\u274C \u8ba4\u8bc1\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5 API Key');
+        } else {
+            showToast('\u274C \u540c\u6b65\u5931\u8d25' + (result.error ? '\uff1a' + result.error : '\uff0c\u8bf7\u68c0\u67e5\u7f51\u7edc'));
+        }
     } catch(e) {
         showToast('\u274C \u540c\u6b65\u5f02\u5e38\uff1a' + (e.message || '\u672a\u77e5\u9519\u8bef'));
     }
@@ -908,17 +939,42 @@ async function syncToCloud() {
     btn.disabled = false;
 }
 
+// Enhanced cloudSave with detailed error info
+async function cloudSaveDetailed() {
+    if (!isCloudEnabled() || !S.currentUser) return { ok: false, error: 'not configured' };
+    var c = _supaCfg(); if (!c) return { ok: false, error: 'not configured' };
+    try {
+        var body = { data: { subPatterns: S.subPatterns, fullPatterns: S.fullPatterns, projects: S.projects }, updated_at: new Date().toISOString() };
+        var pass = localStorage.getItem('knit_pass_' + S.currentUser); if (pass) body.password = pass;
+        var r = await fetchWithTimeout('https://' + c.ref + '.supabase.co/rest/v1/users?username=eq.' + encodeURIComponent(S.currentUser), { method: 'PATCH', headers: _supaHeaders(), body: JSON.stringify(body) }, 15000);
+        if (r.ok) return { ok: true };
+        var respText = '';
+        try { respText = await r.text(); } catch(e){}
+        return { ok: false, status: r.status, error: respText.substring(0, 100) };
+    } catch(e) {
+        if (e.name === 'AbortError') return { ok: false, timeout: true };
+        return { ok: false, error: e.message || 'network error' };
+    }
+}
+
 async function saveToStorage() {
     if (!S.currentUser) return;
     // Always save to localStorage as backup
-    localStorage.setItem('knit_data_' + S.currentUser, JSON.stringify({
-        subPatterns: S.subPatterns, fullPatterns: S.fullPatterns, projects: S.projects
-    }));
-    // Also save to cloud if enabled
+    try {
+        localStorage.setItem('knit_data_' + S.currentUser, JSON.stringify({
+            subPatterns: S.subPatterns, fullPatterns: S.fullPatterns, projects: S.projects
+        }));
+    } catch(e) {
+        showToast('\u26A0 \u672c\u5730\u4fdd\u5b58\u5931\u8d25\uff1a\u6570\u636e\u8fc7\u5927\uff0c\u8bf7\u5220\u9664\u4e00\u4e9b\u56fe\u7eb8');
+    }
+    // Also save to cloud if enabled (fire and forget with feedback)
     if (isCloudEnabled()) {
-        const ok = await cloudSave();
-        if (ok) console.log('Cloud save OK');
-        else console.log('Cloud save failed, using localStorage');
+        try {
+            var ok = await cloudSave();
+            if (!ok) showToast('\u26A0 \u4e91\u7aef\u4fdd\u5b58\u5931\u8d25\uff0c\u5df2\u4fdd\u5b58\u5230\u672c\u5730');
+        } catch(e) {
+            showToast('\u26A0 \u4e91\u7aef\u4fdd\u5b58\u5f02\u5e38\uff0c\u5df2\u4fdd\u5b58\u5230\u672c\u5730');
+        }
     }
 }
 
