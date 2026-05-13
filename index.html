@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>像素提花设计工坊</title>
+    <style>
+        :root {
+            --background: 260 33% 99%;
+            --foreground: 246 18% 35%;
+            --card: 0 0% 100%;
+            --card-foreground: 246 18% 35%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 246 18% 35%;
+            --primary: 261 35% 76%;
+            --primary-foreground: 0 0% 100%;
+            --secondary: 261 45% 93%;
+            --secondary-foreground: 261 30% 52%;
+            --muted: 261 35% 96%;
+            --muted-foreground: 248 12% 60%;
+            --accent: 261 45% 93%;
+            --accent-foreground: 261 30% 52%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 0 0% 98%;
+            --border: 264 35% 89%;
+            --input: 264 35% 89%;
+            --ring: 261 35% 76%;
+            --radius: 0.75rem;
+            --p: #b8a9d9;
+            --p2: #e8e0f3;
+            --p3: #9b8bc7;
+            --bg: #faf8fd;
+            --surface: #ffffff;
+            --text: #4a4a6a;
+            --text2: #8a8aaa;
+            --borderc: #e0d5f0;
+            --shadow: rgba(184,169,217,0.15);
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Layout */
+        .top-bar {
+            height: 56px; background: var(--surface);
+            border-bottom: 1px solid var(--borderc);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 16px; flex-shrink: 0; position: sticky; top: 0; z-index: 50;
+        }
+        .logo { display: flex; align-items: center; gap: 10px; font-size: 1.15rem; font-weight: 700; color: var(--p3); }
+        .logo-icon { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, var(--p), var(--p3)); display: flex; align-items: center; justify-content: center; color: white; font-size: 1rem; }
+        .user-info { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--text2); }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--p), var(--p3)); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.8rem; }
+
+        .nav-bar {
+            height: 40px; background: rgba(255,255,255,0.8);
+            border-bottom: 1px solid var(--borderc);
+            display: flex; align-items: center; gap: 2px;
+            padding: 0 8px; flex-shrink: 0; overflow-x: auto;
+            -ms-overflow-style: none; scrollbar-width: none;
+        }
+        .nav-bar::-webkit-scrollbar { display: none; }
+        .nav-btn {
+            display: flex; align-items: center; gap: 4px;
+            padding: 4px 10px; border-radius: 6px;
+            font-size: 12px; font-weight: 500; white-space: nowrap;
+            border: none; background: transparent; color: var(--text2);
+            cursor: pointer; transition: all 0.2s;
+        }
+        .nav-btn:hover { color: var(--text); background: rgba(0,0,0,0.03); }
+        .nav-btn.active { background: var(--p2); color: var(--p3); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .nav-divider { width: 1px; height: 18px; background: var(--borderc); margin: 0 4px; flex-shrink: 0; }
+
+        .main { flex: 1; overflow-y: auto; padding: 12px; }
+        @media(min-width:640px){ .main { padding: 16px; } }
+        @media(min-width:768px){ .main { padding: 24px; } }
+        .container { max-width: 1152px; margin: 0 auto; }
+
+        /* Panel */
+        .panel {
+            background: var(--surface); border-radius: 16px;
+            padding: 16px; margin-bottom: 12px;
+            box-shadow: 0 4px 20px rgba(184,169,217,0.1);
+            border: 1px solid var(--borderc);
+        }
+        @media(min-width:640px){ .panel { padding: 24px; margin-bottom: 16px; } }
+        .panel-title { font-size: 14px; font-weight: 600; color: var(--p3); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+
+        /* Form */
+        .input-group { display: flex; align-items: center; gap: 6px; }
+        .input-group label { font-size: 12px; color: var(--text2); white-space: nowrap; }
+        .input {
+            width: 64px; padding: 6px 8px; border: 2px solid var(--borderc);
+            border-radius: 8px; font-size: 13px; outline: none;
+            text-align: center; background: var(--bg); color: var(--text);
+            transition: border-color 0.3s;
+        }
+        @media(min-width:640px){ .input { width: 80px; } }
+        .input:focus { border-color: var(--p); }
+        .input-wide { width: 56px; }
+        @media(min-width:640px){ .input-wide { width: 64px; } }
+
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+            padding: 7px 12px; border: none; border-radius: 8px;
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; outline: none;
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--p), var(--p3)); color: white; box-shadow: 0 2px 8px rgba(184,169,217,0.3); }
+        .btn-primary:hover { transform: translateY(-1px); }
+        .btn-secondary { background: var(--p2); color: var(--p3); }
+        .btn-secondary:hover { background: #d4c4e9; }
+        .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--borderc); }
+        .btn-outline:hover { border-color: var(--p); }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-danger { background: #ffebee; color: #c62828; }
+        .btn-xs { padding: 4px 8px; font-size: 11px; }
+
+        .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+        @media(min-width:640px){ .row { gap: 12px; } }
+        .row .ml-auto { margin-left: auto; }
+
+        /* Canvas area */
+        .canvas-scroll-container {
+            height: 280px; border-radius: 12px; border: 2px solid var(--borderc);
+            overflow: auto; background: hsl(var(--muted));
+            -webkit-overflow-scrolling: touch;
+        }
+        @media(min-width:640px){ .canvas-scroll-container { height: 380px; } }
+        .canvas-scroll-container.has-content { border-style: solid; border-color: var(--p2); }
+        .canvas-scroll-container::-webkit-scrollbar { width: 6px; height: 6px; }
+        .canvas-scroll-container::-webkit-scrollbar-track { background: hsl(var(--muted)); border-radius: 3px; }
+        .canvas-scroll-container::-webkit-scrollbar-thumb { background: hsl(var(--primary) / 0.4); border-radius: 3px; }
+        .canvas-scroll-container::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary) / 0.6); }
+
+        .canvas-stack {
+            position: relative; flex-shrink: 0;
+            box-shadow: 0 4px 20px rgba(184,169,217,0.15);
+        }
+
+        /* Grid overlays */
+        .grid-fine {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 3;
+            background-image:
+                repeating-linear-gradient(to right, rgba(160,140,200,0.15) 0px, rgba(160,140,200,0.15) 1px, transparent 1px, transparent 100%),
+                repeating-linear-gradient(to bottom, rgba(160,140,200,0.15) 0px, rgba(160,140,200,0.15) 1px, transparent 1px, transparent 100%);
+        }
+        .grid-bold {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 4;
+            background-image:
+                repeating-linear-gradient(to right, rgba(140,120,180,0.4) 0px, rgba(140,120,180,0.4) 1.5px, transparent 1.5px, transparent 100%),
+                repeating-linear-gradient(to bottom, rgba(140,120,180,0.4) 0px, rgba(140,120,180,0.4) 1.5px, transparent 1.5px, transparent 100%);
+            background-position: right bottom;
+        }
+        .grid-hidden { display: none !important; }
+
+        .empty-state {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 40px; color: var(--text2); text-align: center; height: 100%;
+        }
+
+        /* Tools */
+        .tools { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+        @media(min-width:640px){ .tools { gap: 8px; } }
+        .tool-btn {
+            display: flex; align-items: center; gap: 4px;
+            padding: 5px 10px; border: 2px solid var(--borderc);
+            background: var(--surface); border-radius: 10px;
+            font-size: 12px; color: var(--text); cursor: pointer;
+            transition: all 0.2s; font-weight: 500;
+        }
+        @media(min-width:640px){ .tool-btn { padding: 7px 14px; font-size: 14px; gap: 6px; } }
+        .tool-btn:hover { border-color: var(--p); color: var(--p3); }
+        .tool-btn.active { background: var(--p2); border-color: var(--p); color: var(--p3); font-weight: 600; }
+        .tool-divider { width: 1px; height: 20px; background: var(--borderc); margin: 0 2px; }
+
+        .tool-label { display: none; }
+        @media(min-width:640px){ .tool-label { display: inline; } }
+
+        /* Color palette */
+        .palette { display: flex; gap: 6px; flex-wrap: wrap; }
+        .swatch {
+            width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+            border: 3px solid transparent; transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .swatch:hover { transform: scale(1.12); }
+        .swatch.active { border-color: var(--p3); box-shadow: 0 0 0 3px var(--p2); }
+        .swatch-add { border: 2px dashed var(--borderc); display: flex; align-items: center; justify-content: center; color: var(--text2); font-size: 16px; position: relative; overflow: hidden; }
+        .swatch-add:hover { border-color: var(--p); color: var(--p); }
+        .swatch-add input { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; cursor: pointer; opacity: 0; }
+
+        /* Library grid */
+        .lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; }
+        @media(min-width:640px){ .lib-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 16px; } }
+        .lib-item {
+            background: var(--surface); border: 2px solid var(--borderc); border-radius: 12px;
+            padding: 12px; cursor: pointer; transition: all 0.3s; position: relative;
+        }
+        .lib-item:hover { border-color: var(--p); transform: translateY(-2px); }
+        .lib-item.selected { border-color: var(--p3); box-shadow: 0 0 0 4px var(--p2); }
+        .lib-item canvas { width: 100%; height: auto; border-radius: 8px; image-rendering: pixelated; }
+        .lib-item-name {
+            margin-top: 8px; font-size: 12px; text-align: center; color: var(--text);
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .lib-item-name:hover { color: var(--p3); }
+        .lib-item-name-input {
+            width: 100%; padding: 2px 6px; border: 2px solid var(--p); border-radius: 6px;
+            font-size: 11px; text-align: center; outline: none; background: var(--p2);
+        }
+        .lib-actions { position: absolute; top: 8px; right: 8px; display: none; gap: 4px; }
+        .lib-item:hover .lib-actions { display: flex; }
+        .icon-btn {
+            width: 26px; height: 26px; border-radius: 6px; border: none;
+            background: rgba(255,255,255,0.92); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        .icon-btn:hover { background: var(--p2); }
+        .icon-btn.dl { color: var(--p3); }
+        .icon-btn.del { color: #c62828; }
+
+        /* Pool items */
+        .pool { display: flex; gap: 12px; overflow-x: auto; padding: 12px; background: hsl(var(--muted)); border-radius: 12px; border: 2px dashed var(--borderc); min-height: 100px; align-items: center; }
+        .pool-item { flex-shrink: 0; width: 80px; height: 80px; border: 2px solid var(--borderc); border-radius: 8px; cursor: grab; background: var(--surface); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+        .pool-item canvas { max-width: 100%; max-height: 100%; image-rendering: pixelated; }
+        .pool-item-name { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.92); font-size: 10px; text-align: center; padding: 2px; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Drop zone */
+        .drop-zone { border-color: var(--p) !important; background: var(--p2) !important; }
+
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(74,74,106,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(6px); }
+        .modal-overlay.hidden { display: none; }
+        .modal { background: var(--surface); border-radius: 20px; padding: 32px; width: 92%; max-width: 420px; box-shadow: 0 20px 60px var(--shadow); border: 1px solid var(--borderc); }
+        .modal h2 { color: var(--p3); margin-bottom: 20px; text-align: center; font-weight: 600; font-size: 1.25rem; }
+        .modal .tabs { display: flex; background: hsl(var(--muted)); border-radius: 8px; margin-bottom: 16px; }
+        .modal .tab-btn { flex: 1; padding: 8px; border: none; border-radius: 8px; background: transparent; cursor: pointer; font-size: 14px; color: var(--text2); font-weight: 500; transition: all 0.2s; }
+        .modal .tab-btn.active { background: linear-gradient(135deg, var(--p), var(--p3)); color: white; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; margin-bottom: 5px; font-size: 13px; color: var(--text); font-weight: 500; }
+        .form-group input {
+            width: 100%; padding: 10px 14px; border: 2px solid var(--borderc);
+            border-radius: 12px; font-size: 15px; outline: none;
+            background: var(--bg); color: var(--text); transition: border-color 0.3s;
+        }
+        .form-group input:focus { border-color: var(--p); box-shadow: 0 0 0 4px var(--p2); }
+
+        /* Project list */
+        .project-list { max-height: 240px; overflow-y: auto; margin: 12px 0; }
+        .project-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border: 1px solid var(--borderc); border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; }
+        .project-item:hover { background: var(--p2); border-color: var(--p); }
+
+        /* Footer */
+        .footer-bar {
+            background: linear-gradient(135deg, hsl(var(--primary)), hsl(261 30% 52%));
+            color: white; text-align: center; padding: 10px 16px;
+            font-size: 12px; flex-shrink: 0; display: flex;
+            align-items: center; justify-content: center; gap: 6px;
+        }
+        @media(min-width:640px){ .footer-bar { font-size: 14px; gap: 8px; } }
+
+        /* Toast */
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--p3); color: white; padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 500; opacity: 0; transition: all 0.3s; z-index: 2000; max-width: 90vw; text-align: center; pointer-events: none; }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .anim-fade { animation: fadeIn 0.3s ease-out; }
+
+        /* Responsive */
+        @media(max-width:639px){
+            .hide-mobile { display: none !important; }
+            .logo span:last-child { display: none; }
+        }
+        @media(min-width:640px){ .show-mobile-only { display: none !important; } }
+
+        /* Pixel canvas */
+        .pixel-canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+
+        /* Scrollbar global */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--p); border-radius: 3px; }
+
+        /* tab-content */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Auth */
+        .auth-content { text-align: center; padding: 40px; }
+        .auth-content h2 { font-size: 1.5rem; color: var(--p3); margin-bottom: 8px; }
+        .auth-content p { color: var(--text2); margin-bottom: 20px; font-size: 14px; }
+
+        /* Ref image */
+        .ref-bar { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; padding: 0 4px; }
+        .ref-indicator { font-size: 11px; color: var(--text2); display: flex; align-items: center; gap: 4px; }
+        .ref-remove { font-size: 11px; color: #c62828; background: none; border: none; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+        .ref-remove:hover { background: #ffebee; }
+    </style>
+</head>
+<body>
+
+<!-- Auth Modal -->
+<div id="authModal" class="modal-overlay">
+    <div class="modal">
+        <h2>像素提花设计工坊</h2>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchAuthTab('login')">登录</button>
+            <button class="tab-btn" onclick="switchAuthTab('register')">注册</button>
+        </div>
+        <div id="loginForm">
+            <div class="form-group"><label>用户名</label><input type="text" id="loginUser" placeholder="请输入用户名"></div>
+            <div class="form-group"><label>密码</label><input type="password" id="loginPass" placeholder="请输入密码" onkeydown="if(event.key==='Enter')handleLogin()"></div>
+            <button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="handleLogin()">登录</button>
+        </div>
+        <div id="regForm" style="display:none;">
+            <div class="form-group"><label>用户名</label><input type="text" id="regUser" placeholder="请输入用户名"></div>
+            <div class="form-group"><label>密码</label><input type="password" id="regPass" placeholder="请输入密码"></div>
+            <div class="form-group"><label>确认密码</label><input type="password" id="regConfirm" placeholder="请再次输入密码" onkeydown="if(event.key==='Enter')handleRegister()"></div>
+            <button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="handleRegister()">注册</button>
+        </div>
+        <!-- Cloud Config Toggle -->
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--borderc);">
+            <button class="btn btn-outline btn-xs" style="width:100%;" onclick="toggleCloudConfig()" id="cloudToggleBtn">
+                &#x2601; 云端存储配置 (可选)
+            </button>
+            <div id="cloudConfigPanel" style="display:none;margin-top:12px;">
+                <p style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.6;">
+                    <b>三步完成配置：</b><br>
+                    1. <a href="https://supabase.com/dashboard/sign-up" target="_blank" style="color:var(--p3);">注册 Supabase</a> 并创建项目<br>
+                    2. 在 SQL Editor 中 <a href="#" onclick="showSqlHelp();return false;" style="color:var(--p3);">执行建表语句</a><br>
+                    3. 填入下方的 Project Ref 和 Anon Key
+                </p>
+                <div class="form-group"><label>Project Ref</label><input type="text" id="cloudProjectId" placeholder="如: abcdefghijklmnop" style="font-size:12px;"></div>
+                <div class="form-group"><label>Anon Key</label><input type="text" id="cloudApiKey" placeholder="如: eyJhbGciOiJIUzI1NiIs..." style="font-size:11px;"></div>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-primary btn-sm" style="flex:1;" onclick="testCloudConnection()">&#x1F50C; 测试连接</button>
+                    <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="saveCloudConfig()">&#x1F4BE; 保存配置</button>
+                </div>
+                <p id="cloudStatus" style="font-size:12px;margin-top:8px;text-align:center;white-space:pre-wrap;line-height:1.5;"></p>
+                <div id="sqlHelp" style="display:none;margin-top:12px;padding:12px;background:#f5f5f5;border-radius:8px;font-size:11px;font-family:monospace;white-space:pre-wrap;color:#333;border:1px solid #ddd;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Project Modal -->
+<div id="projectModal" class="modal-overlay hidden">
+    <div class="modal" style="max-width:500px;">
+        <h2 id="projModalTitle">保存项目</h2>
+        <div class="form-group"><label>项目名称</label><input type="text" id="projNameInput" placeholder="输入项目名称"></div>
+        <div id="projListSection">
+            <label style="display:block;margin-bottom:8px;font-size:13px;color:var(--text2);">已有项目</label>
+            <div class="project-list" id="projectList"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px;">
+            <button class="btn btn-secondary" onclick="closeProjectModal()">取消</button>
+            <button class="btn btn-primary" id="projActionBtn" style="flex:1;" onclick="handleProjectAction()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- Top Bar -->
+<div class="top-bar">
+    <div class="logo">
+        <div class="logo-icon">&#x1F9F5;</div>
+        <span>像素提花设计工坊</span>
+    </div>
+    <div class="user-info" id="userInfo" style="display:none;">
+        <span id="userDisplayName" style="display:none;"></span>
+        <div class="user-avatar" id="userAvatar">U</div>
+        <button class="btn btn-secondary btn-sm" id="syncBtn" onclick="syncToCloud()" title="同步数据到云端" style="display:none;">&#x2601; 同步</button>
+        <button class="btn btn-secondary btn-sm" onclick="logout()">退出</button>
+    </div>
+</div>
+
+<!-- Nav Bar -->
+<nav class="nav-bar" id="navBar" style="display:none;">
+    <button class="nav-btn active" data-tab="draw" onclick="switchTab('draw')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/></svg>
+        子图绘制
+    </button>
+    <button class="nav-btn" data-tab="arrange" onclick="switchTab('arrange')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        子图拼接
+    </button>
+    <button class="nav-btn" data-tab="library" onclick="switchTab('library')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+        图纸库
+    </button>
+    <div class="nav-divider"></div>
+    <button class="nav-btn" onclick="openProjectModal('save')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        保存项目
+    </button>
+    <button class="nav-btn" onclick="openProjectModal('load')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        导入项目
+    </button>
+</nav>
+
+<!-- Main Content -->
+<div class="main">
+    <div class="container" id="app">
+        <!-- Auth placeholder -->
+        <div id="authPlaceholder" class="auth-content">
+            <div style="width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,var(--p),var(--p3));display:flex;align-items:center;justify-content:center;color:white;font-size:2rem;margin:0 auto 16px;">&#x1F9F5;</div>
+            <h2>欢迎使用像素提花设计工坊</h2>
+            <p>请先登录或注册账号以开始使用。<br>您可以绘制像素子图、拼接完整图纸，并管理您的设计作品。</p>
+            <button class="btn btn-primary" onclick="document.getElementById('authModal').classList.remove('hidden')" style="padding:12px 32px;font-size:16px;">登录 / 注册</button>
+        </div>
+
+        <!-- Draw Tab -->
+        <div id="tab-draw" class="tab-content anim-fade">
+            <div class="panel">
+                <div class="panel-title">&#x1F3A8; 画布设置</div>
+                <div class="row">
+                    <div class="input-group"><label>像素宽</label><input type="number" class="input" id="drawW" value="20" min="1" max="100"></div>
+                    <div class="input-group"><label>像素高</label><input type="number" class="input" id="drawH" value="20" min="1" max="100"></div>
+                    <div class="input-group"><label>比例</label>
+                        <input type="number" class="input input-wide" id="pxW" value="1" min="0.1" max="10" step="0.1">
+                        <span style="color:var(--text2);font-size:13px;">:</span>
+                        <input type="number" class="input input-wide" id="pxH" value="1" min="0.1" max="10" step="0.1">
+                    </div>
+                    <div class="ml-auto" style="display:flex;gap:6px;">
+                        <button class="btn btn-primary btn-sm" onclick="initDrawCanvas()">&#x2795; 创建画布</button>
+                        <button class="btn btn-outline btn-sm" onclick="clearDrawCanvas()">&#x1F5D1; 清空</button>
+                        <button class="btn btn-primary btn-sm" onclick="saveToLibrary('sub')">&#x1F4BE; 保存子图</button>
+                    </div>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-title">&#x1F58C; 绘制工具</div>
+                <div class="tools">
+                    <button class="tool-btn active" id="tool-brush" onclick="setDrawTool('brush')">&#x270F; <span class="tool-label">画笔</span></button>
+                    <button class="tool-btn" id="tool-eraser" onclick="setDrawTool('eraser')">&#x1F9F9; <span class="tool-label">橡皮</span></button>
+                    <button class="tool-btn" id="tool-picker" onclick="setDrawTool('picker')">&#x1F4A7; <span class="tool-label">取色</span></button>
+                    <button class="tool-btn" id="tool-fill" onclick="setDrawTool('fill')">&#x1FAA3; <span class="tool-label">填充</span></button>
+                    <div class="tool-divider"></div>
+                    <button class="tool-btn" onclick="undoDraw()">&#x21A9; <span class="tool-label">撤销</span></button>
+                    <button class="tool-btn" onclick="redoDraw()">&#x21AA; <span class="tool-label">重做</span></button>
+                    <div class="tool-divider"></div>
+                    <button class="tool-btn active" id="gridToggle" onclick="toggleGrid()">&#x25A6; <span class="tool-label">网格</span></button>
+                    <button class="tool-btn" onclick="document.getElementById('refFileInput').click()">&#x1F5BC; <span class="tool-label">参考图</span></button>
+                    <input type="file" id="refFileInput" style="display:none" accept="image/*" onchange="handleRefFile(event)">
+                </div>
+                <div class="panel-title">&#x1F3A8; 调色板</div>
+                <div class="palette" id="drawPalette"></div>
+            </div>
+            <div class="panel">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <div class="panel-title" style="margin:0;">&#x1F4D0; 绘制区域</div>
+                    <button id="refToggleBtn" class="tool-btn" style="display:none;padding:4px 8px;font-size:12px;" onclick="toggleRefImage()">
+                        &#x1F441; <span id="refToggleText">隐藏参考</span>
+                    </button>
+                </div>
+                <div class="canvas-scroll-container" id="drawCanvasWrapper">
+                    <div class="empty-state"><div style="font-size:3rem;margin-bottom:8px;opacity:0.5;">&#x1F3A8;</div><div>点击"创建画布"开始绘制</div></div>
+                </div>
+                <div class="ref-bar" id="refBar" style="display:none;">
+                    <span class="ref-indicator">&#x1F5BC; 参考图已加载（底层 30% 透明度）</span>
+                    <button class="ref-remove" onclick="removeRefImage()">&#x2715; 移除</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Arrange Tab -->
+        <div id="tab-arrange" class="tab-content anim-fade">
+            <div class="panel">
+                <div class="panel-title">&#x1F4D0; 最终图纸设置</div>
+                <div class="row">
+                    <div class="input-group"><label>图纸宽</label><input type="number" class="input" id="finalW" value="60" min="1" max="200"></div>
+                    <div class="input-group"><label>图纸高</label><input type="number" class="input" id="finalH" value="60" min="1" max="200"></div>
+                    <div class="ml-auto" style="display:flex;gap:6px;">
+                        <button class="btn btn-primary btn-sm" onclick="initFinalCanvas()">&#x2795; 创建图纸</button>
+                        <button class="btn btn-outline btn-sm" onclick="clearFinalCanvas()">&#x1F5D1; 清空</button>
+                        <button class="btn btn-primary btn-sm" onclick="saveToLibrary('full')">&#x1F4BE; 保存图纸</button>
+                    </div>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-title">&#x25A6; 复制排列</div>
+                <div class="row">
+                    <div class="input-group"><label>横向</label><input type="number" class="input" id="rx" value="1" min="1" max="50"></div>
+                    <div class="input-group"><label>纵向</label><input type="number" class="input" id="ry" value="1" min="1" max="50"></div>
+                    <div class="ml-auto" style="display:flex;gap:6px;">
+                        <button class="btn btn-outline btn-sm" onclick="repeatPattern('horizontal')">&#x27A1; 横向</button>
+                        <button class="btn btn-outline btn-sm" onclick="repeatPattern('vertical')">&#x2B07; 纵向</button>
+                        <button class="btn btn-outline btn-sm" onclick="repeatPattern('both')">&#x25A6; 双向</button>
+                    </div>
+                </div>
+                <p id="selectedLabel" style="font-size:12px;color:var(--text2);margin-top:8px;"></p>
+            </div>
+            <div class="panel">
+                <div class="panel-title">&#x1F9E9; 点击插入（选中子图后在图纸上点击插入位置）</div>
+                <div class="pool" id="subPatternPool"><p style="color:var(--text2);font-size:13px;text-align:center;width:100%;">子图库为空</p></div>
+            </div>
+            <div class="panel">
+                <div class="panel-title">&#x1F58C; 画笔修改</div>
+                <div class="tools">
+                    <button class="tool-btn active" id="ftool-brush" onclick="setFinalTool('brush')">&#x270F; <span class="tool-label">画笔</span></button>
+                    <button class="tool-btn" id="ftool-eraser" onclick="setFinalTool('eraser')">&#x1F9F9; <span class="tool-label">橡皮</span></button>
+                    <button class="tool-btn" id="ftool-picker" onclick="setFinalTool('picker')">&#x1F4A7; <span class="tool-label">取色</span></button>
+                    <div class="tool-divider"></div>
+                    <button class="tool-btn" onclick="undoFinal()">&#x21A9; <span class="tool-label">撤销</span></button>
+                    <div class="tool-divider"></div>
+                    <button class="tool-btn active" id="fgridToggle" onclick="toggleFinalGrid()">&#x25A6; <span class="tool-label">网格</span></button>
+                </div>
+                <div class="palette" id="finalPalette"></div>
+            </div>
+            <div class="panel">
+                <div class="panel-title">&#x1F5BC; 最终图纸</div>
+                <div class="canvas-scroll-container" id="finalCanvasWrapper">
+                    <div class="empty-state"><div style="font-size:3rem;margin-bottom:8px;opacity:0.5;">&#x1F9E9;</div><div>点击"创建图纸"开始拼接</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Library Tab -->
+        <div id="tab-library" class="tab-content anim-fade">
+            <div class="panel">
+                <div class="panel-title">&#x1F4DA; 图纸库管理</div>
+                <div class="tools">
+                    <button class="tool-btn active" id="lib-tab-sub" onclick="switchLibTab('sub')">&#x1F3A8; <span class="tool-label">子图库</span></button>
+                    <button class="tool-btn" id="lib-tab-full" onclick="switchLibTab('full')">&#x1F5BC; <span class="tool-label">完整图纸</span></button>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-title" id="libraryTitle">&#x1F3A8; 子图库</div>
+                <div class="lib-grid" id="libraryGrid">
+                    <div class="empty-state"><div style="font-size:3rem;margin-bottom:8px;opacity:0.5;">&#x1F4ED;</div><div>暂无图纸，快去绘制吧！</div></div>
+                </div>
+            </div>
+            <div class="panel" id="editPanel" style="display:none;">
+                <div class="panel-title">&#x270F; 像素编辑</div>
+                <div class="tools">
+                    <button class="tool-btn active" id="etool-brush" onclick="setEditTool('brush')">&#x270F; <span class="tool-label">画笔</span></button>
+                    <button class="tool-btn" id="etool-eraser" onclick="setEditTool('eraser')">&#x1F9F9; <span class="tool-label">橡皮</span></button>
+                    <button class="tool-btn" id="etool-picker" onclick="setEditTool('picker')">&#x1F4A7; <span class="tool-label">取色</span></button>
+                    <div class="tool-divider"></div>
+                    <button class="tool-btn active" id="egridToggle" onclick="toggleEditGrid()">&#x25A6; <span class="tool-label">网格</span></button>
+                    <button class="btn btn-primary btn-sm ml-auto" onclick="saveEdit()">&#x1F4BE; 保存修改</button>
+                </div>
+                <div class="palette" id="editPalette"></div>
+                <div class="canvas-scroll-container" id="editCanvasWrapper" style="margin-top:12px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer-bar">
+    <span>Made with</span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="red" stroke="none" style="opacity:0.7;"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+    <span>by leaf-knitter | 2026 像素提花设计工坊</span>
+</footer>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<script>
+
+// ==================== State ====================
+const S = {
+    currentUser: null,
+    currentTab: 'draw',
+    drawTool: 'brush', finalTool: 'brush', editTool: 'brush',
+    currentColor: '#b8a9d9',
+    drawW: 20, drawH: 20, pxW: 1, pxH: 1,
+    finalW: 60, finalH: 60,
+    isDrawing: false,
+    drawHistory: [], drawHistoryIdx: -1,
+    finalHistory: [], finalHistoryIdx: -1,
+    subPatterns: [],
+    fullPatterns: [],
+    selectedLibItem: null,
+    selectedForArrange: null,
+    libTab: 'sub',
+    projects: [],
+    dragData: null,
+    showGrid: true, showFinalGrid: true, showEditGrid: true,
+    refImage: null, showRefImage: true,
+    // Canvas refs
+    drawCanvas: null, drawCtx: null,
+    finalCanvas: null, finalCtx: null,
+    editCanvas: null, editCtx: null,
+    // Ref image
+    refImgLoaded: null,
+};
+
+const defaultColors = [
+    '#1a1a2e','#16213e','#0f3460','#533483','#b8a9d9',
+    '#e94560','#ff6b6b','#feca57','#48dbfb','#1dd1a1',
+    '#ff9ff3','#54a0ff','#5f27cd','#00d2d3','#ff9f43',
+    '#ee5a24','#009432','#0652dd','#9980fa','#833471',
+    '#ffffff','#f5f6fa','#dcdde1','#7f8fa6','#273c75'
+];
+
+// ==================== Utils ====================
+function hexToRgb(hex) {
+    return { r: parseInt(hex.slice(1,3),16), g: parseInt(hex.slice(3,5),16), b: parseInt(hex.slice(5,7),16) };
+}
+function rgbToHex(r,g,b) {
+    return '#' + ((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+function serializeImageData(imgData) {
+    return { data: Array.from(imgData.data), width: imgData.width, height: imgData.height };
+}
+function deserializeImageData(s) {
+    return new ImageData(new Uint8ClampedArray(s.data), s.width, s.height);
+}
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+}
+function switchAuthTab(tab) {
+    document.querySelectorAll('.modal .tab-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+    document.getElementById('regForm').style.display = tab === 'register' ? 'block' : 'none';
+}
+
+// ==================== Auth ====================
+async function handleLogin() {
+    const u = document.getElementById('loginUser').value.trim();
+    const p = document.getElementById('loginPass').value;
+    if (!u || !p) { showToast('请填写完整信息'); return; }
+    // Check cloud first if enabled
+    if (isCloudEnabled()) {
+        const cloudData = await cloudLoadForUser(u, p);
+        if (cloudData) {
+            // Cloud login success
+            S.currentUser = u;
+            localStorage.setItem('knit_current_user', u);
+            // Cache password for cloud auth
+            localStorage.setItem('knit_pass_' + u, cloudData.password || btoa(p));
+            // Sync to localStorage too
+            localStorage.setItem('knit_data_' + u, JSON.stringify({
+                subPatterns: cloudData.subPatterns || [],
+                fullPatterns: cloudData.fullPatterns || [],
+                projects: cloudData.projects || []
+            }));
+            // Save user to local list
+            saveUserLocal(u, cloudData.password || btoa(p));
+            enterApp();
+            await loadUserData();
+            showToast('云端登录成功，欢迎 ' + u + '！');
+            renderLibrary();
+            return;
+        }
+    }
+    // LocalStorage login
+    const users = JSON.parse(localStorage.getItem('knit_users') || '[]');
+    const user = users.find(x => x.username === u && x.password === btoa(p));
+    if (!user) { showToast('用户名或密码错误'); return; }
+    S.currentUser = u;
+    localStorage.setItem('knit_current_user', u);
+    localStorage.setItem('knit_pass_' + u, btoa(p));
+    enterApp();
+    await loadUserData();
+    showToast('欢迎回来，' + u + '！');
+    renderLibrary();
+}
+function enterApp() {
+    document.getElementById('authModal').classList.add('hidden');
+    document.getElementById('authPlaceholder').style.display = 'none';
+    document.getElementById('navBar').style.display = '';
+    updateAuthUI();
+}
+function saveUserLocal(username, passwordHash) {
+    const users = JSON.parse(localStorage.getItem('knit_users') || '[]');
+    const idx = users.findIndex(x => x.username === username);
+    if (idx >= 0) users[idx].password = passwordHash;
+    else users.push({ username, password: passwordHash });
+    localStorage.setItem('knit_users', JSON.stringify(users));
+}
+async function cloudLoadForUser(username, password) {
+    const row = await supaSelect(username);
+    if (!row) return null;
+    if (row.password !== btoa(password)) return null;
+    const data = row.data || {};
+    return { password: row.password, subPatterns: data.subPatterns || [], fullPatterns: data.fullPatterns || [], projects: data.projects || [] };
+}
+async function handleRegister() {
+    const u = document.getElementById('regUser').value.trim();
+    const p = document.getElementById('regPass').value;
+    const c = document.getElementById('regConfirm').value;
+    if (!u || !p) { showToast('请填写完整信息'); return; }
+    if (p !== c) { showToast('两次密码不一致'); return; }
+    const passHash = btoa(p);
+    // Check local
+    const users = JSON.parse(localStorage.getItem('knit_users') || '[]');
+    if (users.find(x => x.username === u)) { showToast('用户名已存在'); return; }
+    // Check cloud if enabled
+    if (isCloudEnabled()) {
+        const existing = await supaSelect(u);
+        if (existing) { showToast('\u4e91\u7aef\u7528\u6237\u540d\u5df2\u5b58\u5728'); return; }
+        // Register on Supabase
+        const ok = await supaInsert(u, passHash);
+        if (!ok) showToast('\u672c\u5730\u6ce8\u518c\u6210\u529f\uff0c\u4e91\u7aef\u6ce8\u518c\u5931\u8d25');
+    }
+    users.push({ username: u, password: passHash });
+    localStorage.setItem('knit_users', JSON.stringify(users));
+    localStorage.setItem('knit_pass_' + u, passHash);
+    showToast('注册成功！');
+    // Switch to login tab
+    document.querySelectorAll('.modal .tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.modal .tab-btn')[0].classList.add('active');
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('regForm').style.display = 'none';
+}
+function logout() {
+    S.currentUser = null;
+    localStorage.removeItem('knit_current_user');
+    document.getElementById('userInfo').style.display = 'none';
+    document.getElementById('navBar').style.display = 'none';
+    document.getElementById('authPlaceholder').style.display = '';
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    S.subPatterns = []; S.fullPatterns = []; S.projects = [];
+    document.getElementById('authModal').classList.remove('hidden');
+    showToast('已退出登录');
+}
+function updateAuthUI() {
+    if (!S.currentUser) return;
+    document.getElementById('userInfo').style.display = 'flex';
+    document.getElementById('userDisplayName').textContent = S.currentUser;
+    document.getElementById('userAvatar').textContent = S.currentUser.charAt(0).toUpperCase();
+    document.getElementById('syncBtn').style.display = isCloudEnabled() ? '' : 'none';
+}
+async function loadUserData() {
+    if (!S.currentUser) return;
+    let data = null;
+    // Try cloud first if enabled
+    if (isCloudEnabled()) {
+        data = await cloudLoad();
+        if (data) {
+            showToast('已从云端同步数据');
+            // Also sync to localStorage as cache
+            localStorage.setItem('knit_data_' + S.currentUser, JSON.stringify({
+                subPatterns: data.subPatterns || [],
+                fullPatterns: data.fullPatterns || [],
+                projects: data.projects || []
+            }));
+        }
+    }
+    // Fallback to localStorage
+    if (!data) {
+        data = JSON.parse(localStorage.getItem('knit_data_' + S.currentUser) || '{}');
+    }
+    if (data.subPatterns) S.subPatterns = data.subPatterns.map(p => ({...p, imageData: deserializeImageData(p.imageData)}));
+    if (data.fullPatterns) S.fullPatterns = data.fullPatterns.map(p => ({...p, imageData: deserializeImageData(p.imageData)}));
+    S.projects = data.projects || [];
+    updateSubPatternPool();
+}
+
+// ==================== Cloud Storage (Supabase) ====================
+// ==================== Cloud Storage (Supabase) ====================
+function isCloudEnabled() { return !!(S.cloud && S.cloud.projectId && S.cloud.apiKey && S.cloud.enabled); }
+function loadCloudConfig() {
+    try { const s = localStorage.getItem('knit_cloud_config'); if (s) S.cloud = JSON.parse(s); } catch(e){}
+    if (!S.cloud) S.cloud = {};
+}
+function toggleCloudConfig() { var p = document.getElementById('cloudConfigPanel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
+function showSqlHelp() {
+    var el = document.getElementById('sqlHelp');
+    if (el.style.display === 'block') { el.style.display = 'none'; return; }
+    el.textContent = '-- \u5728 Supabase SQL Editor \u4e2d\u6267\u884c\uff1a\nCREATE TABLE IF NOT EXISTS users (\n  username TEXT PRIMARY KEY,\n  password TEXT NOT NULL,\n  data JSONB DEFAULT \'{}\'::jsonb,\n  updated_at TIMESTAMP DEFAULT now()\n);\n\n-- \u5143\u5173\u95ed\u884c\u7ea7\u5b89\u5168\uff08\u5fc5\u987b\uff09\uff1a\nALTER TABLE users DISABLE ROW LEVEL SECURITY;';
+    el.style.display = 'block';
+}
+async function testCloudConnection() {
+    var ref = document.getElementById('cloudProjectId').value.trim();
+    var key = document.getElementById('cloudApiKey').value.trim();
+    var s = document.getElementById('cloudStatus');
+    if (!ref || !key) { s.textContent = '\u274C \u8bf7\u586b\u5199 Project Ref \u548c Anon Key'; return; }
+    s.textContent = '\u{1F504} \u6d4b\u8bd5\u4e2d...';
+    try {
+        var url = 'https://' + ref + '.supabase.co/rest/v1/users?select=count&limit=1';
+        var r = await fetch(url, { headers: { 'apikey': key, 'Authorization': 'Bearer ' + key } });
+        if (r.ok) {
+            s.innerHTML = '\u2705 \u8fde\u63a5\u6210\u529f\uff01\u53ef\u4ee5\u4fdd\u5b58\u914d\u7f6e\u3002';
+        } else if (r.status === 404) {
+            s.innerHTML = '\u274C \u8868\u4e0d\u5b58\u5728\uff08404\uff09<br>\u8bf7\u5728 SQL Editor \u4e2d\u6267\u884c\u5efa\u8868\u8bed\u53e5\uff08\u70b9\u201c\u6267\u884c\u5efa\u8868\u8bed\u53e5\u201d\u67e5\u770b\uff09\u3002';
+        } else if (r.status === 401 || r.status === 403) {
+            s.innerHTML = '\u274C \u8ba4\u8bc1\u5931\u8d25\uff08' + r.status + '\uff09<br>\u8bf7\u68c0\u67e5 Project Ref \u548c Anon Key \u662f\u5426\u6b63\u786e\u3002';
+        } else {
+            var body = await r.text().catch(()=>'');
+            if (body.indexOf('row-level') >= 0 || body.indexOf('security') >= 0) {
+                s.innerHTML = '\u274C RLS \u6743\u9650\u62d2\u7edd<br>\u8bf7\u5728 SQL Editor \u4e2d\u6267\u884c\uff1aALTER TABLE users DISABLE ROW LEVEL SECURITY;';
+            } else {
+                s.innerHTML = '\u274C \u54cd\u5e94\u9519\u8bef\uff1a' + r.status + '<br>' + body.substring(0, 120);
+            }
+        }
+    } catch(e) {
+        s.innerHTML = '\u274C \u7f51\u7edc\u8bf7\u6c42\u5931\u8d25<br>\u53ef\u80fd\u539f\u56e0\uff1aProject Ref \u9519\u8bef\u6216\u8de8\u57df\u88ab\u963b\u6b62\u3002';
+    }
+}
+function saveCloudConfig() {
+    var ref = document.getElementById('cloudProjectId').value.trim();
+    var key = document.getElementById('cloudApiKey').value.trim();
+    var s = document.getElementById('cloudStatus');
+    if (!ref || !key) { s.textContent = '\u274C \u8bf7\u586b\u5199\u5b8c\u6574'; return; }
+    S.cloud = { projectId: ref, apiKey: key, enabled: true };
+    localStorage.setItem('knit_cloud_config', JSON.stringify(S.cloud));
+    s.textContent = '\u2705 \u914d\u7f6e\u5df2\u4fdd\u5b58';
+    showToast('\u4e91\u7aef\u914d\u7f6e\u5df2\u4fdd\u5b58');
+}
+function removeCloudConfig() { S.cloud = {}; localStorage.removeItem('knit_cloud_config'); }
+
+// --- Supabase API helpers ---
+function _supaCfg() { var c = S.cloud || {}; return (c.projectId && c.apiKey) ? { ref: c.projectId, key: c.apiKey } : null; }
+function _supaHeaders() { var c = _supaCfg(); return c ? { 'apikey': c.key, 'Authorization': 'Bearer ' + c.key, 'Content-Type': 'application/json' } : null; }
+
+async function supaSelect(username) {
+    var c = _supaCfg(); if (!c) return null;
+    try {
+        var r = await fetch('https://' + c.ref + '.supabase.co/rest/v1/users?username=eq.' + encodeURIComponent(username) + '&select=*&limit=1', { headers: { 'apikey': c.key, 'Authorization': 'Bearer ' + c.key } });
+        if (!r.ok) return null;
+        var rows = await r.json();
+        return (rows && rows.length) ? rows[0] : null;
+    } catch(e) { return null; }
+}
+async function supaInsert(username, passwordHash) {
+    var c = _supaCfg(); if (!c) return false;
+    try {
+        var r = await fetch('https://' + c.ref + '.supabase.co/rest/v1/users', {
+            method: 'POST', headers: _supaHeaders(),
+            body: JSON.stringify({ username: username, password: passwordHash, data: {}, updated_at: new Date().toISOString() })
+        });
+        return r.ok || r.status === 201;
+    } catch(e) { return false; }
+}
+async function supaUpdate(username, payload) {
+    var c = _supaCfg(); if (!c) return false;
+    try {
+        var body = { data: payload, updated_at: new Date().toISOString() };
+        var pass = localStorage.getItem('knit_pass_' + username); if (pass) body.password = pass;
+        var r = await fetch('https://' + c.ref + '.supabase.co/rest/v1/users?username=eq.' + encodeURIComponent(username), { method: 'PATCH', headers: _supaHeaders(), body: JSON.stringify(body) });
+        return r.ok;
+    } catch(e) { return false; }
+}
+async function cloudSave() {
+    if (!isCloudEnabled() || !S.currentUser) return false;
+    return await supaUpdate(S.currentUser, { subPatterns: S.subPatterns, fullPatterns: S.fullPatterns, projects: S.projects });
+}
+async function cloudLoad() {
+    if (!isCloudEnabled() || !S.currentUser) return null;
+    var row = await supaSelect(S.currentUser); if (!row) return null;
+    var d = row.data || {};
+    return { password: row.password, subPatterns: d.subPatterns || [], fullPatterns: d.fullPatterns || [], projects: d.projects || [] };
+}
+
+async function syncToCloud() {
+    if (!isCloudEnabled()) { showToast('\u672a\u914d\u7f6e\u4e91\u7aef\uff0c\u8bf7\u5148\u914d\u7f6e Supabase'); return; }
+    if (!S.currentUser) { showToast('\u8bf7\u5148\u767b\u5f55'); return; }
+    var btn = document.getElementById('syncBtn');
+    var orig = btn.innerHTML;
+    btn.innerHTML = '\u{1F504} \u540c\u6b65\u4e2d...';
+    btn.disabled = true;
+    try {
+        var ok = await cloudSave();
+        if (ok) showToast('\u2705 \u5df2\u540c\u6b65\u5230\u4e91\u7aef');
+        else showToast('\u274C \u540c\u6b65\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5\u7f51\u7edc');
+    } catch(e) {
+        showToast('\u274C \u540c\u6b65\u5f02\u5e38\uff1a' + (e.message || '\u672a\u77e5\u9519\u8bef'));
+    }
+    btn.innerHTML = orig;
+    btn.disabled = false;
+}
+
+async function saveToStorage() {
+    if (!S.currentUser) return;
+    // Always save to localStorage as backup
+    localStorage.setItem('knit_data_' + S.currentUser, JSON.stringify({
+        subPatterns: S.subPatterns, fullPatterns: S.fullPatterns, projects: S.projects
+    }));
+    // Also save to cloud if enabled
+    if (isCloudEnabled()) {
+        const ok = await cloudSave();
+        if (ok) console.log('Cloud save OK');
+        else console.log('Cloud save failed, using localStorage');
+    }
+}
+
+// ==================== Tabs ====================
+function switchTab(tab) {
+    S.currentTab = tab;
+    document.querySelectorAll('.nav-btn[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === 'tab-' + tab));
+    if (tab === 'library') renderLibrary();
+    if (tab === 'arrange') updateSubPatternPool();
+}
+
+// ==================== Color Palette ====================
+function initPalettes() {
+    ['drawPalette', 'finalPalette', 'editPalette'].forEach(id => {
+        const el = document.getElementById(id);
+        el.innerHTML = '';
+        defaultColors.forEach(c => el.appendChild(createSwatch(c, id)));
+        const add = document.createElement('div');
+        add.className = 'swatch swatch-add';
+        add.innerHTML = '+';
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'position:relative;overflow:hidden;width:28px;height:28px;';
+        const inp = document.createElement('input');
+        inp.type = 'color';
+        inp.style.cssText = 'position:absolute;top:-50%;left:-50%;width:200%;height:200%;cursor:pointer;opacity:0;';
+        inp.onchange = e => {
+            if (!el.querySelector(`[data-color="${e.target.value}"]`)) {
+                el.insertBefore(createSwatch(e.target.value, id), add);
+            }
+            selectColor(e.target.value, id);
+        };
+        wrap.appendChild(inp);
+        add.appendChild(wrap);
+        el.appendChild(add);
+    });
+    updateActiveColor();
+}
+function createSwatch(color, paletteId) {
+    const d = document.createElement('div');
+    d.className = 'swatch' + (color === S.currentColor ? ' active' : '');
+    d.style.backgroundColor = color;
+    d.dataset.color = color;
+    d.onclick = () => selectColor(color, paletteId);
+    return d;
+}
+function selectColor(color, pid) {
+    S.currentColor = color;
+    document.querySelectorAll('.swatch').forEach(s => s.classList.toggle('active', s.dataset.color === color));
+}
+function updateActiveColor() {
+    document.querySelectorAll('.swatch').forEach(s => s.classList.toggle('active', s.dataset.color === S.currentColor));
+}
+
+// ==================== Draw Canvas ====================
+function computeCanvasSize(w, h, ratioW, ratioH) {
+    // Fixed per-pixel display size - no longer scales the entire canvas down
+    // Large canvases extend beyond the container and are viewed via scrollbars
+    const pixelSize = 16;
+    const sw = Math.round(w * pixelSize * (ratioW || 1));
+    const sh = Math.round(h * pixelSize * (ratioH || 1));
+    return { sw, sh, pw: sw / w, ph: sh / h };
+}
+function createCanvasInWrapper(wrapperId, w, h) {
+    const wrap = document.getElementById(wrapperId);
+    const rect = wrap.getBoundingClientRect();
+    const hasContent = wrap.querySelector('.canvas-stack');
+    if (hasContent) hasContent.remove();
+    const empty = wrap.querySelector('.empty-state');
+    if (empty) empty.remove();
+    wrap.classList.add('has-content');
+    const { sw, sh, pw, ph } = computeCanvasSize(w, h, S.pxW, S.pxH);
+    const stack = document.createElement('div');
+    stack.className = 'canvas-stack';
+    stack.style.cssText = `width:${sw}px;height:${sh}px;position:relative;flex-shrink:0;`;
+    // Layer 0: White background div (so canvas can be transparent)
+    const bgDiv = document.createElement('div');
+    bgDiv.style.cssText = `position:absolute;top:0;left:0;width:${sw}px;height:${sh}px;z-index:0;background:#ffffff;`;
+    stack.appendChild(bgDiv);
+    // Layer 1: Reference image (if already imported)
+    if (S.refImage) {
+        const refDiv = document.createElement('div');
+        refDiv.className = 'ref-image-layer';
+        refDiv.style.cssText = `position:absolute;top:0;left:0;width:${sw}px;height:${sh}px;z-index:1;opacity:0.3;background-image:url(${S.refImage});background-size:100% 100%;background-repeat:no-repeat;`;
+        if (!S.showRefImage) refDiv.style.display = 'none';
+        stack.appendChild(refDiv);
+    }
+    // Layer 2: Drawing canvas (TRANSPARENT background so ref shows through)
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    canvas.className = 'pixel-canvas';
+    canvas.style.cssText = `position:absolute;top:0;left:0;width:${sw}px;height:${sh}px;z-index:2;cursor:crosshair;`;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    // Canvas is transparent - white is on bgDiv below
+    ctx.clearRect(0, 0, w, h);
+    stack.appendChild(canvas);
+    // Grid overlays (above canvas)
+    if (S.showGrid) {
+        const g1 = document.createElement('div');
+        g1.className = 'grid-fine';
+        g1.style.cssText = `background-size:${pw}px ${ph}px;z-index:3;`;
+        stack.appendChild(g1);
+        const g2 = document.createElement('div');
+        g2.className = 'grid-bold';
+        g2.style.cssText = `background-size:${pw * 10}px ${ph * 10}px;z-index:4;`;
+        stack.appendChild(g2);
+    }
+    wrap.appendChild(stack);
+    return { canvas, ctx, sw, sh };
+}
+
+// ==================== Draw Functions ====================
+function initDrawCanvas() {
+    S.drawW = parseInt(document.getElementById('drawW').value) || 20;
+    S.drawH = parseInt(document.getElementById('drawH').value) || 20;
+    S.pxW = parseFloat(document.getElementById('pxW').value) || 1;
+    S.pxH = parseFloat(document.getElementById('pxH').value) || 1;
+    const result = createCanvasInWrapper('drawCanvasWrapper', S.drawW, S.drawH);
+    S.drawCanvas = result.canvas;
+    S.drawCtx = result.ctx;
+    // Canvas is transparent - white background is on bgDiv layer below
+    // Only clear to transparent
+    S.drawCtx.clearRect(0, 0, S.drawW, S.drawH);
+    bindDrawEvents(S.drawCanvas, 'draw');
+    const imgData = S.drawCtx.getImageData(0, 0, S.drawW, S.drawH);
+    S.drawHistory = [imgData];
+    S.drawHistoryIdx = 0;
+    showToast(`已创建 ${S.drawW}x${S.drawH} 画布`);
+}
+function clearDrawBg(ctx, w, h) {
+    // Clear to transparent (white bg is on bgDiv layer below)
+    ctx.clearRect(0, 0, w, h);
+}
+function setDrawTool(tool) {
+    S.drawTool = tool;
+    document.querySelectorAll('#tool-brush, #tool-eraser, #tool-picker, #tool-fill').forEach(b => b.classList.remove('active'));
+    document.getElementById('tool-' + tool)?.classList.add('active');
+}
+function toggleGrid() {
+    S.showGrid = !S.showGrid;
+    const btn = document.getElementById('gridToggle');
+    if (btn) { btn.classList.toggle('active', S.showGrid); btn.querySelector('.tool-label').textContent = S.showGrid ? '网格' : '网格'; }
+    if (S.drawCanvas) {
+        const stack = S.drawCanvas.parentElement;
+        stack.querySelectorAll('.grid-fine, .grid-bold').forEach(g => g.remove());
+        if (S.showGrid) {
+            const { pw, ph } = computeCanvasSize(S.drawW, S.drawH, S.pxW, S.pxH);
+            const g1 = document.createElement('div'); g1.className = 'grid-fine'; g1.style.backgroundSize = `${pw}px ${ph}px`; stack.appendChild(g1);
+            const g2 = document.createElement('div'); g2.className = 'grid-bold'; g2.style.backgroundSize = `${pw*10}px ${ph*10}px`; stack.appendChild(g2);
+        }
+    }
+}
+function toggleRefImage() {
+    S.showRefImage = !S.showRefImage;
+    const btn = document.getElementById('refToggleBtn');
+    const txt = document.getElementById('refToggleText');
+    txt.textContent = S.showRefImage ? '隐藏参考' : '显示参考';
+    // Visual feedback: button active state
+    btn.classList.toggle('active', S.showRefImage);
+    // Toggle ref image visibility via CSS (fast, no canvas redraw)
+    const stack = S.drawCanvas?.parentElement;
+    if (stack) {
+        const refLayer = stack.querySelector('.ref-image-layer');
+        if (refLayer) refLayer.style.display = S.showRefImage ? '' : 'none';
+    }
+}
+function handleRefFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+        S.refImage = ev.target.result;
+        S.showRefImage = true;
+        // Remove old ref layer if exists
+        const stack = S.drawCanvas?.parentElement;
+        if (stack) {
+            const old = stack.querySelector('.ref-image-layer');
+            if (old) old.remove();
+            // Create new ref layer as a div under the canvas
+            const refDiv = document.createElement('div');
+            refDiv.className = 'ref-image-layer';
+            const { sw, sh } = computeCanvasSize(S.drawW, S.drawH, S.pxW, S.pxH);
+            refDiv.style.cssText = 'position:absolute;top:0;left:0;width:' + sw + 'px;height:' + sh + 'px;z-index:1;opacity:0.3;background-image:url(' + S.refImage + ');background-size:100% 100%;background-repeat:no-repeat;';
+            stack.insertBefore(refDiv, stack.firstChild);
+        }
+        // Show controls
+        const btn = document.getElementById('refToggleBtn');
+        btn.style.display = '';
+        btn.classList.add('active');
+        document.getElementById('refBar').style.display = '';
+        document.getElementById('refToggleText').textContent = '隐藏参考';
+        showToast('参考图已导入');
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+}
+function removeRefImage() {
+    // Remove ref image layer div
+    const stack = S.drawCanvas?.parentElement;
+    if (stack) { const el = stack.querySelector('.ref-image-layer'); if (el) el.remove(); }
+    S.refImage = null; S.refImgLoaded = null;
+    document.getElementById('refToggleBtn').style.display = 'none';
+    document.getElementById('refBar').style.display = 'none';
+}
+
+// ==================== Final Canvas ====================
+function initFinalCanvas() {
+    S.finalW = parseInt(document.getElementById('finalW').value) || 60;
+    S.finalH = parseInt(document.getElementById('finalH').value) || 60;
+    const { sw, sh } = computeCanvasSize(S.finalW, S.finalH, 1, 1);
+    const wrap = document.getElementById('finalCanvasWrapper');
+    const existing = wrap.querySelector('.canvas-stack');
+    if (existing) existing.remove();
+    const empty = wrap.querySelector('.empty-state');
+    if (empty) empty.remove();
+    wrap.classList.add('has-content');
+    const stack = document.createElement('div');
+    stack.className = 'canvas-stack';
+    stack.style.cssText = `width:${sw}px;height:${sh}px;position:relative;flex-shrink:0;`;
+    const canvas = document.createElement('canvas');
+    canvas.width = S.finalW; canvas.height = S.finalH;
+    canvas.style.cssText = `position:absolute;top:0;left:0;width:${sw}px;height:${sh}px;z-index:2;cursor:crosshair;`;
+    canvas.className = 'pixel-canvas';
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, S.finalW, S.finalH);
+    stack.appendChild(canvas);
+    // Grid
+    if (S.showFinalGrid) {
+        const pw = sw / S.finalW, ph = sh / S.finalH;
+        const g1 = document.createElement('div'); g1.className = 'grid-fine'; g1.style.backgroundSize = `${pw}px ${ph}px`; stack.appendChild(g1);
+        const g2 = document.createElement('div'); g2.className = 'grid-bold'; g2.style.backgroundSize = `${pw*10}px ${ph*10}px`; stack.appendChild(g2);
+    }
+    wrap.appendChild(stack);
+    S.finalCanvas = canvas; S.finalCtx = ctx;
+    bindDrawEvents(canvas, 'final');
+    S.finalHistory = [ctx.getImageData(0, 0, S.finalW, S.finalH)];
+    S.finalHistoryIdx = 0;
+    showToast(`已创建 ${S.finalW}x${S.finalH} 拼接图纸`);
+}
+function setFinalTool(tool) {
+    S.finalTool = tool;
+    document.querySelectorAll('#ftool-brush, #ftool-eraser, #ftool-picker').forEach(b => b.classList.remove('active'));
+    document.getElementById('ftool-' + tool)?.classList.add('active');
+}
+function toggleFinalGrid() {
+    S.showFinalGrid = !S.showFinalGrid;
+    const btn = document.getElementById('fgridToggle');
+    btn.classList.toggle('active', S.showFinalGrid);
+    if (S.finalCanvas) {
+        const stack = S.finalCanvas.parentElement;
+        stack.querySelectorAll('.grid-fine, .grid-bold').forEach(g => g.remove());
+        if (S.showFinalGrid) {
+            const { sw, sh } = computeCanvasSize(S.finalW, S.finalH, 1, 1);
+            const pw = sw / S.finalW, ph = sh / S.finalH;
+            const g1 = document.createElement('div'); g1.className = 'grid-fine'; g1.style.backgroundSize = `${pw}px ${ph}px`; stack.appendChild(g1);
+            const g2 = document.createElement('div'); g2.className = 'grid-bold'; g2.style.backgroundSize = `${pw*10}px ${ph*10}px`; stack.appendChild(g2);
+        }
+    }
+}
+
+// ==================== Canvas Events ====================
+function getPixelPos(e, canvas) {
+    const rect = canvas.getBoundingClientRect();
+    const sx = canvas.width / rect.width;
+    const sy = canvas.height / rect.height;
+    let cx, cy;
+    if (e.touches && e.touches.length) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
+    else { cx = e.clientX; cy = e.clientY; }
+    return {
+        x: Math.max(0, Math.min(canvas.width - 1, Math.floor((cx - rect.left) * sx))),
+        y: Math.max(0, Math.min(canvas.height - 1, Math.floor((cy - rect.top) * sy)))
+    };
+}
+function bindDrawEvents(canvas, type) {
+    const isDraw = type === 'draw';
+    const getCtx = () => isDraw ? S.drawCtx : (type === 'final' ? S.finalCtx : S.editCtx);
+    const getW = () => isDraw ? S.drawW : (type === 'final' ? S.finalW : S.editW);
+    const getH = () => isDraw ? S.drawH : (type === 'final' ? S.finalH : S.editH);
+    const getTool = () => isDraw ? S.drawTool : (type === 'final' ? S.finalTool : S.editTool);
+
+    const onStart = e => {
+        e.preventDefault();
+        const ctx = getCtx();
+        if (!ctx) return;
+
+        const { x, y } = getPixelPos(e, canvas);
+        const tool = getTool();
+        const w = getW(), h = getH();
+
+        // Click-to-insert: when final canvas is clicked and a sub-pattern is selected
+        if (type === 'final' && S.selectedForArrange && (tool === 'brush' || e.shiftKey)) {
+            insertPatternAt(S.selectedForArrange, x, y);
+            return;
+        }
+
+        S.isDrawing = true;
+
+        if (tool === 'picker') {
+            const p = ctx.getImageData(x, y, 1, 1).data;
+            selectColor(rgbToHex(p[0], p[1], p[2]));
+            if (isDraw) setDrawTool('brush'); else if (type === 'final') setFinalTool('brush'); else setEditTool('brush');
+            return;
+        }
+        if (tool === 'fill') {
+            floodFill(x, y, S.currentColor, ctx, w, h);
+            saveState(type);
+            return;
+        }
+        ctx.fillStyle = tool === 'eraser' ? '#ffffff' : S.currentColor;
+        ctx.fillRect(x, y, 1, 1);
+    };
+    const onMove = e => {
+        e.preventDefault();
+        if (!S.isDrawing) return;
+        const ctx = getCtx();
+        const tool = getTool();
+        if (!ctx || tool === 'picker' || tool === 'fill') return;
+        const { x, y } = getPixelPos(e, canvas);
+        const w = getW(), h = getH();
+        if (x < 0 || y < 0 || x >= w || y >= h) return;
+        ctx.fillStyle = tool === 'eraser' ? '#ffffff' : S.currentColor;
+        ctx.fillRect(x, y, 1, 1);
+    };
+    const onEnd = () => {
+        if (S.isDrawing) { S.isDrawing = false; saveState(type); }
+    };
+
+    canvas.onmousedown = onStart;
+    canvas.onmousemove = onMove;
+    canvas.onmouseup = onEnd;
+    canvas.onmouseleave = onEnd;
+    canvas.ontouchstart = e => { e.preventDefault(); onStart(e); };
+    canvas.ontouchmove = e => { e.preventDefault(); onMove(e); };
+    canvas.ontouchend = onEnd;
+}
+function floodFill(sx, sy, fillColor, ctx, w, h) {
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const d = imgData.data;
+    const pos = (sy * w + sx) * 4;
+    const sr = d[pos], sg = d[pos+1], sb = d[pos+2];
+    const fr = hexToRgb(fillColor);
+    if (sr === fr.r && sg === fr.g && sb === fr.b) return;
+    const stack = [[sx, sy]];
+    const visited = new Set();
+    while (stack.length) {
+        const [x, y] = stack.pop();
+        const key = x + ',' + y;
+        if (visited.has(key)) continue;
+        visited.add(key);
+        if (x < 0 || x >= w || y < 0 || y >= h) continue;
+        const p = (y * w + x) * 4;
+        if (d[p] !== sr || d[p+1] !== sg || d[p+2] !== sb) continue;
+        d[p] = fr.r; d[p+1] = fr.g; d[p+2] = fr.b; d[p+3] = 255;
+        stack.push([x+1, y], [x-1, y], [x, y+1], [x, y-1]);
+    }
+    ctx.putImageData(imgData, 0, 0);
+}
+function saveState(type) {
+    if (type === 'draw' && S.drawCtx) {
+        S.drawHistoryIdx++;
+        S.drawHistory = S.drawHistory.slice(0, S.drawHistoryIdx);
+        S.drawHistory.push(S.drawCtx.getImageData(0, 0, S.drawW, S.drawH));
+        if (S.drawHistory.length > 50) S.drawHistory.shift();
+    } else if (type === 'final' && S.finalCtx) {
+        S.finalHistoryIdx++;
+        S.finalHistory = S.finalHistory.slice(0, S.finalHistoryIdx);
+        S.finalHistory.push(S.finalCtx.getImageData(0, 0, S.finalW, S.finalH));
+        if (S.finalHistory.length > 50) S.finalHistory.shift();
+    }
+}
+function undoDraw() {
+    if (S.drawHistoryIdx > 0 && S.drawCtx) { S.drawHistoryIdx--; S.drawCtx.putImageData(S.drawHistory[S.drawHistoryIdx], 0, 0); }
+}
+function redoDraw() {
+    if (S.drawHistoryIdx < S.drawHistory.length - 1 && S.drawCtx) { S.drawHistoryIdx++; S.drawCtx.putImageData(S.drawHistory[S.drawHistoryIdx], 0, 0); }
+}
+function clearDrawCanvas() {
+    if (!S.drawCtx) return; clearDrawBg(S.drawCtx, S.drawW, S.drawH); saveState('draw'); showToast('画布已清空');
+}
+function undoFinal() {
+    if (S.finalHistoryIdx > 0 && S.finalCtx) { S.finalHistoryIdx--; S.finalCtx.putImageData(S.finalHistory[S.finalHistoryIdx], 0, 0); }
+}
+function clearFinalCanvas() {
+    if (!S.finalCtx) return; S.finalCtx.fillStyle = '#ffffff'; S.finalCtx.fillRect(0, 0, S.finalW, S.finalH); saveState('final'); showToast('图纸已清空');
+}
+
+// ==================== Library ====================
+function switchLibTab(tab) {
+    S.libTab = tab; S.selectedLibItem = null;
+    document.getElementById('editPanel').style.display = 'none';
+    document.getElementById('lib-tab-sub').classList.toggle('active', tab === 'sub');
+    document.getElementById('lib-tab-full').classList.toggle('active', tab === 'full');
+    document.getElementById('libraryTitle').textContent = (tab === 'sub' ? '\u{1F3A8} 子图库' : '\u{1F5BC} 完整图纸');
+    renderLibrary();
+}
+function renderLibrary() {
+    const list = S.libTab === 'sub' ? S.subPatterns : S.fullPatterns;
+    const grid = document.getElementById('libraryGrid');
+    if (!list.length) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div style="font-size:3rem;margin-bottom:8px;opacity:0.5;">\u{1F4ED}</div><div>\u6682\u65e0\u56fe\u7eb8\uff0c\u5feb\u53bb\u7ed8\u5236\u5427\uff01</div></div>';
+        return;
+    }
+    grid.innerHTML = '';
+    list.forEach((pat, idx) => {
+        const el = document.createElement('div');
+        el.className = 'lib-item' + (S.selectedLibItem === idx ? ' selected' : '');
+        const cvs = document.createElement('canvas');
+        cvs.width = pat.width; cvs.height = pat.height;
+        cvs.className = 'pixel-canvas';
+        const ctx = cvs.getContext('2d');
+        ctx.putImageData(new ImageData(new Uint8ClampedArray(pat.imageData.data), pat.imageData.width, pat.imageData.height), 0, 0);
+        el.appendChild(cvs);
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'lib-item-name';
+        nameDiv.textContent = pat.name;
+        nameDiv.title = '\u70b9\u51fb\u4fee\u6539\u540d\u79f0';
+        nameDiv.onclick = e => {
+            e.stopPropagation();
+            const input = document.createElement('input');
+            input.type = 'text'; input.value = pat.name;
+            input.className = 'lib-item-name-input';
+            input.onblur = () => { if (input.value.trim()) renameItem(idx, input.value.trim()); };
+            input.onkeydown = e => { if (e.key === 'Enter') input.blur(); if (e.key === 'Escape') renderLibrary(); };
+            nameDiv.replaceWith(input); input.focus(); input.select();
+        };
+        el.appendChild(nameDiv);
+        const actions = document.createElement('div');
+        actions.className = 'lib-actions';
+        actions.innerHTML = '<button class="icon-btn" title="\u7f16\u8f91" onclick="event.stopPropagation();startEditing(' + idx + ')">&#9999;</button>' +
+            '<button class="icon-btn dl" title="\u4fdd\u5b58\u4e3aPNG" onclick="event.stopPropagation();downloadPattern(' + idx + ')">&#11015;</button>' +
+            '<button class="icon-btn del" title="\u5220\u9664" onclick="event.stopPropagation();deletePattern(' + idx + ')">&#10006;</button>';
+        el.appendChild(actions);
+        el.onclick = () => {
+            S.selectedLibItem = idx;
+            if (S.libTab === 'sub') { S.selectedForArrange = pat; showToast('\u5df2\u9009\u62e9\u5b50\u56fe\uff1a' + pat.name); }
+            renderLibrary();
+        };
+        grid.appendChild(el);
+    });
+}
+async function renameItem(idx, newName) {
+    const list = S.libTab === 'sub' ? S.subPatterns : S.fullPatterns;
+    list[idx].name = newName; await saveToStorage(); renderLibrary(); showToast('\u540d\u79f0\u5df2\u4fee\u6539');
+}
+function downloadPattern(idx) {
+    const list = S.libTab === 'sub' ? S.subPatterns : S.fullPatterns;
+    const pat = list[idx];
+    const c = document.createElement('canvas');
+    c.width = pat.width; c.height = pat.height;
+    const ctx = c.getContext('2d');
+    ctx.putImageData(new ImageData(new Uint8ClampedArray(pat.imageData.data), pat.imageData.width, pat.imageData.height), 0, 0);
+    const a = document.createElement('a');
+    a.download = pat.name + '.png'; a.href = c.toDataURL('image/png'); a.click();
+}
+function deletePattern(idx) {
+    if (!confirm('\u786e\u5b9a\u5220\u9664\u6b64\u56fe\u7eb8\uff1f')) return;
+    const list = S.libTab === 'sub' ? S.subPatterns : S.fullPatterns;
+    list.splice(idx, 1); S.selectedLibItem = null; saveToStorage().catch(()=>{}); renderLibrary(); showToast('\u5df2\u5220\u9664');
+}
+async function saveToLibrary(type) {
+    let ctx, w, h;
+    if (type === 'sub') { if (!S.drawCtx) { showToast('\u8bf7\u5148\u521b\u5efa\u753b\u5e03'); return; } ctx = S.drawCtx; w = S.drawW; h = S.drawH; }
+    else { if (!S.finalCtx) { showToast('\u8bf7\u5148\u521b\u5efa\u56fe\u7eb8'); return; } ctx = S.finalCtx; w = S.finalW; h = S.finalH; }
+    const name = prompt('\u8bf7\u8f93\u5165\u56fe\u7eb8\u540d\u79f0\uff1a', '\u56fe\u7eb8_' + Date.now().toString(16).slice(-4));
+    if (!name) return;
+    const pat = { name, width: w, height: h, imageData: serializeImageData(ctx.getImageData(0, 0, w, h)), createdAt: new Date().toISOString() };
+    if (type === 'sub') S.subPatterns.push(pat); else S.fullPatterns.push(pat);
+    await saveToStorage(); renderLibrary(); updateSubPatternPool();
+    showToast('\u5df2\u4fdd\u5b58\u5230\u56fe\u7eb8\u5e93');
+}
+
+// ==================== Edit Mode ====================
+function startEditing(idx) {
+    const list = S.libTab === 'sub' ? S.subPatterns : S.fullPatterns;
+    const pat = list[idx];
+    S.selectedLibItem = idx;
+    S.editPat = pat;
+    const wrap = document.getElementById('editCanvasWrapper');
+    const existing = wrap.querySelector('.canvas-stack');
+    if (existing) existing.remove();
+    const winW = window.innerWidth;
+    const isMobile = winW < 640;
+    const pixelSize = 16;
+    const sw = Math.round(pat.width * pixelSize), sh = Math.round(pat.height * pixelSize);
+    const stack = document.createElement('div');
+    stack.className = 'canvas-stack';
+    stack.style.cssText = 'width:' + sw + 'px;height:' + sh + 'px;position:relative;flex-shrink:0;';
+    const canvas = document.createElement('canvas');
+    canvas.width = pat.width; canvas.height = pat.height;
+    canvas.style.cssText = 'position:absolute;top:0;left:0;width:' + sw + 'px;height:' + sh + 'px;z-index:2;cursor:crosshair;';
+    canvas.className = 'pixel-canvas';
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.putImageData(new ImageData(new Uint8ClampedArray(pat.imageData.data), pat.imageData.width, pat.imageData.height), 0, 0);
+    S.editW = pat.width; S.editH = pat.height;
+    S.editCanvas = canvas; S.editCtx = ctx;
+    stack.appendChild(canvas);
+    if (S.showEditGrid) {
+        const pw = sw / pat.width, ph = sh / pat.height;
+        const g1 = document.createElement('div'); g1.className = 'grid-fine'; g1.style.backgroundSize = pw + 'px ' + ph + 'px'; stack.appendChild(g1);
+        const g2 = document.createElement('div'); g2.className = 'grid-bold'; g2.style.backgroundSize = (pw * 10) + 'px ' + (ph * 10) + 'px'; stack.appendChild(g2);
+    }
+    wrap.appendChild(stack);
+    bindDrawEvents(canvas, 'edit');
+    document.getElementById('editPanel').style.display = 'block';
+    setEditTool('brush');
+}
+function setEditTool(tool) {
+    S.editTool = tool;
+    document.querySelectorAll('#etool-brush, #etool-eraser, #etool-picker').forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById('etool-' + tool);
+    if (btn) btn.classList.add('active');
+}
+function toggleEditGrid() {
+    S.showEditGrid = !S.showEditGrid;
+    document.getElementById('egridToggle').classList.toggle('active', S.showEditGrid);
+    if (S.editCanvas && S.editPat) {
+        const stack = S.editCanvas.parentElement;
+        stack.querySelectorAll('.grid-fine, .grid-bold').forEach(g => g.remove());
+        if (S.showEditGrid) {
+            const pixelSize = 16;
+            const pw = pixelSize, ph = pixelSize;
+            const g1 = document.createElement('div'); g1.className = 'grid-fine'; g1.style.backgroundSize = pw + 'px ' + ph + 'px'; stack.appendChild(g1);
+            const g2 = document.createElement('div'); g2.className = 'grid-bold'; g2.style.backgroundSize = (pw * 10) + 'px ' + (ph * 10) + 'px'; stack.appendChild(g2);
+        }
+    }
+}
+async function saveEdit() {
+    if (!S.editCtx || !S.editPat) return;
+    const list = S.libTab === 'sub' ? S.subPatterns : S.fullPatterns;
+    const idx = list.findIndex(p => p.name === S.editPat.name && p.createdAt === S.editPat.createdAt);
+    if (idx >= 0) {
+        list[idx].imageData = serializeImageData(S.editCtx.getImageData(0, 0, S.editPat.width, S.editPat.height));
+        await saveToStorage(); renderLibrary(); updateSubPatternPool();
+        showToast('修改已保存');
+    }
+}
+
+// ==================== Sub Pattern Pool ====================
+function updateSubPatternPool() {
+    const pool = document.getElementById('subPatternPool');
+    if (!S.subPatterns.length) {
+        pool.innerHTML = '<p style="color:var(--text2);font-size:13px;text-align:center;width:100%;">子图库为空，请先绘制并保存子图</p>';
+        return;
+    }
+    pool.innerHTML = '';
+    S.subPatterns.forEach((pat, idx) => {
+        const el = document.createElement('div');
+        el.className = 'pool-item';
+        el.draggable = true;
+        el.ondragstart = () => { S.dragData = pat; el.style.opacity = '0.5'; };
+        el.ondragend = () => { el.style.opacity = ''; };
+        const cvs = document.createElement('canvas');
+        cvs.width = pat.width; cvs.height = pat.height;
+        cvs.className = 'pixel-canvas';
+        const ctx = cvs.getContext('2d');
+        ctx.putImageData(new ImageData(new Uint8ClampedArray(pat.imageData.data), pat.imageData.width, pat.imageData.height), 0, 0);
+        el.appendChild(cvs);
+        const nm = document.createElement('div');
+        nm.className = 'pool-item-name'; nm.textContent = pat.name;
+        el.appendChild(nm);
+        el.onclick = () => { S.selectedForArrange = pat; showToast('已选择子图：' + pat.name); };
+        pool.appendChild(el);
+    });
+}
+
+// ==================== Click-to-Insert for Arrange ====================
+function insertPatternAt(pat, cx, cy) {
+    if (!pat || !S.finalCtx) return;
+    const pc = document.createElement('canvas');
+    pc.width = pat.width; pc.height = pat.height;
+    const pctx = pc.getContext('2d');
+    pctx.putImageData(new ImageData(new Uint8ClampedArray(pat.imageData.data), pat.imageData.width, pat.imageData.height), 0, 0);
+    // Clamp to canvas bounds so the pattern doesn't overflow
+    const x = Math.max(0, Math.min(S.finalW - pat.width, cx));
+    const y = Math.max(0, Math.min(S.finalH - pat.height, cy));
+    S.finalCtx.drawImage(pc, x, y);
+    saveState('final');
+    showToast('已插入子图至 (' + x + ',' + y + ')');
+}
+
+// ==================== Repeat Pattern ====================
+function repeatPattern(dir) {
+    if (!S.selectedForArrange || !S.finalCtx) { showToast('请先选择子图'); return; }
+    const pat = S.selectedForArrange;
+    const pc = document.createElement('canvas');
+    pc.width = pat.width; pc.height = pat.height;
+    const pctx = pc.getContext('2d');
+    pctx.putImageData(new ImageData(new Uint8ClampedArray(pat.imageData.data), pat.imageData.width, pat.imageData.height), 0, 0);
+    const cx = parseInt(document.getElementById('rx').value) || 1;
+    const cy = parseInt(document.getElementById('ry').value) || 1;
+    if (dir === 'both') { for (let r = 0; r < cy; r++) for (let c = 0; c < cx; c++) S.finalCtx.drawImage(pc, c * pat.width, r * pat.height); }
+    else if (dir === 'horizontal') { for (let i = 0; i < cx; i++) S.finalCtx.drawImage(pc, i * pat.width, 0); }
+    else if (dir === 'vertical') { for (let i = 0; i < cy; i++) S.finalCtx.drawImage(pc, 0, i * pat.height); }
+    saveState('final');
+    showToast('已生成阵列');
+}
+
+// ==================== Project Modal ====================
+let projMode = 'save';
+function openProjectModal(mode) {
+    projMode = mode;
+    document.getElementById('projModalTitle').textContent = mode === 'save' ? '保存项目' : '导入项目';
+    document.getElementById('projActionBtn').textContent = mode === 'save' ? '保存' : '导入';
+    renderProjectList();
+    document.getElementById('projectModal').classList.remove('hidden');
+}
+function closeProjectModal() { document.getElementById('projectModal').classList.add('hidden'); }
+function renderProjectList() {
+    const container = document.getElementById('projectList');
+    if (!S.projects.length) { container.innerHTML = '<p style="text-align:center;color:var(--text2);font-size:13px;padding:16px;">暂无项目</p>'; return; }
+    container.innerHTML = '';
+    S.projects.forEach((p, i) => {
+        const el = document.createElement('div');
+        el.className = 'project-item';
+        el.innerHTML = '<div><div style="font-weight:600;">' + p.name + '</div><div style="font-size:12px;color:var(--text2);">' + new Date(p.createdAt).toLocaleString() + '</div></div>' +
+            '<button class="btn btn-danger btn-xs" onclick="event.stopPropagation();deleteProject(' + i + ')">删除</button>';
+        el.onclick = () => { document.getElementById('projNameInput').value = p.name; };
+        container.appendChild(el);
+    });
+}
+function deleteProject(idx) {
+    if (!confirm('确定删除？')) return;
+    S.projects.splice(idx, 1); saveToStorage(); renderProjectList();
+}
+function handleProjectAction() {
+    const name = document.getElementById('projNameInput').value.trim();
+    if (!name) { showToast('请输入项目名称'); return; }
+    if (projMode === 'save') {
+        if (!S.finalCanvas) { showToast('请先创建拼接图纸'); return; }
+        const proj = { name, width: S.finalW, height: S.finalH, imageData: serializeImageData(S.finalCtx.getImageData(0, 0, S.finalW, S.finalH)), createdAt: new Date().toISOString() };
+        S.projects.push(proj); saveToStorage();
+        showToast('项目已保存');
+    } else {
+        const proj = S.projects.find(p => p.name === name);
+        if (!proj) { showToast('项目不存在'); return; }
+        S.finalW = proj.width; S.finalH = proj.height;
+        document.getElementById('finalW').value = proj.width;
+        document.getElementById('finalH').value = proj.height;
+        initFinalCanvas();
+        S.finalCtx.putImageData(deserializeImageData(proj.imageData), 0, 0);
+        saveState('final');
+        showToast('项目已导入');
+    }
+    closeProjectModal(); renderProjectList();
+}
+
+// ==================== Init ====================
+function init() {
+    initPalettes();
+    loadCloudConfig(); // Load cloud settings from localStorage
+    if (S.cloud && S.cloud.projectId) {
+        document.getElementById('cloudProjectId').value = S.cloud.projectId || '';
+        document.getElementById('cloudApiKey').value = S.cloud.apiKey || '';
+    }
+    const savedUser = localStorage.getItem('knit_current_user');
+    if (savedUser) {
+        S.currentUser = savedUser;
+        document.getElementById('authModal').classList.add('hidden');
+        document.getElementById('authPlaceholder').style.display = 'none';
+        document.getElementById('navBar').style.display = '';
+        updateAuthUI();
+        loadUserData();
+    } else {
+        document.getElementById('authModal').classList.remove('hidden');
+        document.getElementById('navBar').style.display = 'none';
+    }
+    switchTab('draw');
+}
+
+// Handle window resize for canvas
+let resizeTimer;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+        // Canvas will resize on next interaction
+    }, 250);
+});
+
+init();
+</script>
+</body>
+</html>
