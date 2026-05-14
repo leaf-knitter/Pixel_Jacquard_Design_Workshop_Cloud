@@ -622,7 +622,24 @@ function serializeImageData(imgData) {
     return { data: Array.from(imgData.data), width: imgData.width, height: imgData.height };
 }
 function deserializeImageData(s) {
-    return new ImageData(new Uint8ClampedArray(s.data), s.width, s.height);
+    // Defensive: validate input structure
+    if (!s || typeof s !== 'object') return null;
+    var d = s.data;
+    // Handle corrupted data: JSON.stringify on Uint8ClampedArray produces {"0":255,"1":0,...}
+    // Detect by checking if data looks like an object with numeric keys instead of an array
+    if (d && typeof d === 'object' && !Array.isArray(d)) {
+        // Try to reconstruct array from numeric-keyed object
+        var keys = Object.keys(d).filter(function(k) { return /^\d+$/.test(k); }).sort(function(a,b){return+a-+b;});
+        if (keys.length > 0) {
+            d = keys.map(function(k) { return d[k]; });
+        } else {
+            return null;
+        }
+    }
+    if (!Array.isArray(d) && !(d instanceof Uint8ClampedArray)) return null;
+    try {
+        return new ImageData(new Uint8ClampedArray(d), s.width, s.height);
+    } catch(e) { return null; }
 }
 // Ensure pattern array is JSON-serializable by converting ImageData objects to plain objects
 function serializePatternsForStorage(patterns) {
@@ -633,12 +650,20 @@ function serializePatternsForStorage(patterns) {
         if (imageDataObj && imageDataObj.data && typeof imageDataObj.data.length === 'number' && !(Array.isArray(imageDataObj.data))) {
             imageDataObj = { data: Array.from(imageDataObj.data), width: imageDataObj.width, height: imageDataObj.height };
         }
+        // Ensure data field is always a plain array for JSON safety
+        if (imageDataObj && imageDataObj.data && Array.isArray(imageDataObj.data)) {
+            // Already an array, keep as-is
+        } else if (imageDataObj && imageDataObj.data === undefined) {
+            // Missing data field, set to null marker
+            imageDataObj = null;
+        }
         return {
             name: p.name,
             width: p.width,
             height: p.height,
             imageData: imageDataObj,
-            createdAt: p.createdAt
+            createdAt: p.createdAt,
+            updatedAt: p.updatedAt || p.createdAt
         };
     });
 }
@@ -669,10 +694,10 @@ async function handleLogin() {
             localStorage.setItem('knit_current_user', u);
             // Cache password for cloud auth
             localStorage.setItem('knit_pass_' + u, cloudData.password || btoa(p));
-            // Sync to localStorage too
+            // Sync to localStorage too - serialize to ensure JSON-safe
             localStorage.setItem('knit_data_' + u, JSON.stringify({
-                subPatterns: cloudData.subPatterns || [],
-                fullPatterns: cloudData.fullPatterns || [],
+                subPatterns: serializePatternsForStorage(cloudData.subPatterns || []),
+                fullPatterns: serializePatternsForStorage(cloudData.fullPatterns || []),
                 projects: cloudData.projects || []
             }));
             // Save user to local list
@@ -775,11 +800,11 @@ async function loadUserData() {
         } catch(e) { data = null; cloudError = e.message; }
         if (data && data._loaded) {
             showToast('\u2705 \u5df2\u4ece\u4e91\u7aef\u540c\u6b65\u6570\u636e');
-            // Cache to localStorage
+            // Cache to localStorage - serialize to ensure JSON-safe
             try {
                 localStorage.setItem('knit_data_' + S.currentUser, JSON.stringify({
-                    subPatterns: data.subPatterns || [],
-                    fullPatterns: data.fullPatterns || [],
+                    subPatterns: serializePatternsForStorage(data.subPatterns || []),
+                    fullPatterns: serializePatternsForStorage(data.fullPatterns || []),
                     projects: data.projects || []
                 }));
                 localStorage.setItem('knit_cloud_synced_' + S.currentUser, 'true');
@@ -800,11 +825,28 @@ async function loadUserData() {
     if (!data || !data._loaded) {
         try { data = JSON.parse(localStorage.getItem('knit_data_' + S.currentUser) || '{}'); } catch(e) { data = {}; }
     }
-    if (data.subPatterns) S.subPatterns = data.subPatterns.map(p => ({...p, imageData: deserializeImageData(p.imageData)}));
-    else S.subPatterns = [];
-    if (data.fullPatterns) S.fullPatterns = data.fullPatterns.map(p => ({...p, imageData: deserializeImageData(p.imageData)}));
-    else S.fullPatterns = [];
+    // Deserialize with defensive handling: skip corrupted patterns instead of crashing
+    if (data.subPatterns) {
+        S.subPatterns = data.subPatterns.map(function(p) {
+            var img = deserializeImageData(p.imageData);
+            if (!img) return null; // mark corrupted
+            return {...p, imageData: img};
+        }).filter(function(p) { return p !== null; });
+    } else S.subPatterns = [];
+    if (data.fullPatterns) {
+        S.fullPatterns = data.fullPatterns.map(function(p) {
+            var img = deserializeImageData(p.imageData);
+            if (!img) return null;
+            return {...p, imageData: img};
+        }).filter(function(p) { return p !== null; });
+    } else S.fullPatterns = [];
     S.projects = data.projects || [];
+    // Warn if some patterns were skipped due to corruption
+    var skippedSub = (data.subPatterns || []).length - S.subPatterns.length;
+    var skippedFull = (data.fullPatterns || []).length - S.fullPatterns.length;
+    if (skippedSub > 0 || skippedFull > 0) {
+        showToast('\u26A0 \u5df2\u8df3\u8fc7 ' + (skippedSub + skippedFull) + ' \u4e2a\u635f\u574f\u7684\u56fe\u6848\uff0c\u8bf7\u91cd\u65b0\u521b\u5efa');
+    }
     updateSubPatternPool();
     S._dataLoaded = true;
 }
@@ -1050,6 +1092,27 @@ async function cloudSaveDetailed() {
     }
 }
 
+// Throttled cloud save: batch rapid local changes and sync once after delay
+var _cloudSaveTimer = null;
+var _pendingCloudSave = false;
+function scheduleCloudSave(delayMs) {
+    delayMs = delayMs || 2000;
+    _pendingCloudSave = true;
+    if (_cloudSaveTimer) clearTimeout(_cloudSaveTimer);
+    _cloudSaveTimer = setTimeout(async function() {
+        _pendingCloudSave = false;
+        if (isCloudEnabled() && S.currentUser && S._dataLoaded) {
+            try {
+                var ok = await cloudSave();
+                if (ok) console.log('Auto cloud sync OK');
+                else console.log('Auto cloud sync skipped or failed');
+            } catch(e) {
+                console.log('Auto cloud sync exception:', e.message);
+            }
+        }
+    }, delayMs);
+}
+
 async function saveToStorage() {
     if (!S.currentUser) return;
     // Serialize patterns to ensure ImageData objects become plain JSON objects
@@ -1063,14 +1126,9 @@ async function saveToStorage() {
     } catch(e) {
         showToast('\u26A0 \u672c\u5730\u4fdd\u5b58\u5931\u8d25\uff1a\u6570\u636e\u8fc7\u5927\uff0c\u8bf7\u5220\u9664\u4e00\u4e9b\u56fe\u7eb8');
     }
-    // Also save to cloud if enabled and data has been loaded
+    // Throttled cloud sync: schedule instead of immediate sync
     if (isCloudEnabled() && S._dataLoaded) {
-        try {
-            var ok = await cloudSave();
-            if (!ok) console.log('Cloud save skipped or failed, data kept in localStorage');
-        } catch(e) {
-            console.log('Cloud save exception:', e.message);
-        }
+        scheduleCloudSave(2000);
     }
 }
 
@@ -1539,7 +1597,8 @@ async function saveToLibrary(type) {
     var dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0') + '_' + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0');
     const name = prompt('\u8bf7\u8f93\u5165\u56fe\u7eb8\u540d\u79f0\uff1a', '\u56fe\u7eb8_' + dateStr);
     if (!name) return;
-    const pat = { name, width: w, height: h, imageData: serializeImageData(ctx.getImageData(0, 0, w, h)), createdAt: new Date().toISOString() };
+    var now = new Date().toISOString();
+    const pat = { name, width: w, height: h, imageData: serializeImageData(ctx.getImageData(0, 0, w, h)), createdAt: now, updatedAt: now };
     if (type === 'sub') S.subPatterns.push(pat); else S.fullPatterns.push(pat);
     await saveToStorage(); renderLibrary(); updateSubPatternPool();
     showToast('\u5df2\u4fdd\u5b58\u5230\u56fe\u7eb8\u5e93');
@@ -1606,6 +1665,7 @@ async function saveEdit() {
     const idx = list.findIndex(p => p.name === S.editPat.name && p.createdAt === S.editPat.createdAt);
     if (idx >= 0) {
         list[idx].imageData = serializeImageData(S.editCtx.getImageData(0, 0, S.editPat.width, S.editPat.height));
+        list[idx].updatedAt = new Date().toISOString();
         await saveToStorage(); renderLibrary(); updateSubPatternPool();
         showToast('修改已保存');
     }
@@ -1703,7 +1763,8 @@ function handleProjectAction() {
     if (!name) { showToast('请输入项目名称'); return; }
     if (projMode === 'save') {
         if (!S.finalCanvas) { showToast('请先创建拼接图纸'); return; }
-        const proj = { name, width: S.finalW, height: S.finalH, imageData: serializeImageData(S.finalCtx.getImageData(0, 0, S.finalW, S.finalH)), createdAt: new Date().toISOString() };
+        var now = new Date().toISOString();
+        const proj = { name, width: S.finalW, height: S.finalH, imageData: serializeImageData(S.finalCtx.getImageData(0, 0, S.finalW, S.finalH)), createdAt: now, updatedAt: now };
         S.projects.push(proj); saveToStorage();
         showToast('项目已保存');
     } else {
