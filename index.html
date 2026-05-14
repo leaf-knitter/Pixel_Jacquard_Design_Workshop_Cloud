@@ -515,6 +515,7 @@
                     <button class="tool-btn" id="ftool-picker" onclick="setFinalTool(&#39;picker&#39;)">💧 <span class="tool-label">取色</span></button>
                     <div class="tool-divider"></div>
                     <button class="tool-btn" onclick="undoFinal()">↩ <span class="tool-label">撤销</span></button>
+                    <button class="tool-btn" onclick="redoFinal()">↪ <span class="tool-label">重做</span></button>
                     <div class="tool-divider"></div>
                     <button class="tool-btn active" id="fgridToggle" onclick="toggleFinalGrid()">▦ <span class="tool-label">网格</span></button>
                 </div>
@@ -1653,25 +1654,40 @@ function saveState(type) {
         S.drawHistoryIdx++;
         S.drawHistory = S.drawHistory.slice(0, S.drawHistoryIdx);
         S.drawHistory.push(S.drawCtx.getImageData(0, 0, S.drawW, S.drawH));
-        if (S.drawHistory.length > 50) S.drawHistory.shift();
+        if (S.drawHistory.length > 50) { S.drawHistory.shift(); S.drawHistoryIdx--; }
     } else if (type === 'final' && S.finalCtx) {
         S.finalHistoryIdx++;
         S.finalHistory = S.finalHistory.slice(0, S.finalHistoryIdx);
         S.finalHistory.push(S.finalCtx.getImageData(0, 0, S.finalW, S.finalH));
-        if (S.finalHistory.length > 50) S.finalHistory.shift();
+        if (S.finalHistory.length > 50) { S.finalHistory.shift(); S.finalHistoryIdx--; }
     }
 }
 function undoDraw() {
-    if (S.drawHistoryIdx > 0 && S.drawCtx) { S.drawHistoryIdx--; S.drawCtx.putImageData(S.drawHistory[S.drawHistoryIdx], 0, 0); }
+    if (S.drawHistoryIdx > 0 && S.drawCtx && S.drawHistory[S.drawHistoryIdx - 1]) {
+        S.drawHistoryIdx--;
+        S.drawCtx.putImageData(S.drawHistory[S.drawHistoryIdx], 0, 0);
+    }
 }
 function redoDraw() {
-    if (S.drawHistoryIdx < S.drawHistory.length - 1 && S.drawCtx) { S.drawHistoryIdx++; S.drawCtx.putImageData(S.drawHistory[S.drawHistoryIdx], 0, 0); }
+    if (S.drawHistoryIdx < S.drawHistory.length - 1 && S.drawCtx && S.drawHistory[S.drawHistoryIdx + 1]) {
+        S.drawHistoryIdx++;
+        S.drawCtx.putImageData(S.drawHistory[S.drawHistoryIdx], 0, 0);
+    }
 }
 function clearDrawCanvas() {
     if (!S.drawCtx) return; clearDrawBg(S.drawCtx, S.drawW, S.drawH); saveState('draw'); showToast('画布已清空');
 }
 function undoFinal() {
-    if (S.finalHistoryIdx > 0 && S.finalCtx) { S.finalHistoryIdx--; S.finalCtx.putImageData(S.finalHistory[S.finalHistoryIdx], 0, 0); }
+    if (S.finalHistoryIdx > 0 && S.finalCtx && S.finalHistory[S.finalHistoryIdx - 1]) {
+        S.finalHistoryIdx--;
+        S.finalCtx.putImageData(S.finalHistory[S.finalHistoryIdx], 0, 0);
+    }
+}
+function redoFinal() {
+    if (S.finalHistoryIdx < S.finalHistory.length - 1 && S.finalCtx && S.finalHistory[S.finalHistoryIdx + 1]) {
+        S.finalHistoryIdx++;
+        S.finalCtx.putImageData(S.finalHistory[S.finalHistoryIdx], 0, 0);
+    }
 }
 function clearFinalCanvas() {
     if (!S.finalCtx) return; S.finalCtx.fillStyle = '#ffffff'; S.finalCtx.fillRect(0, 0, S.finalW, S.finalH); saveState('final'); showToast('图纸已清空');
