@@ -750,12 +750,13 @@ function updateAuthUI() {
 async function loadUserData() {
     if (!S.currentUser) { S._dataLoaded = true; return; }
     var data = null;
+    var cloudError = null;
     // Try cloud first if enabled
     if (isCloudEnabled()) {
-        showToast('\u{1F504} \u6b63\u5728\u4ece\u4e91\u7aef\u52a0\u8f7d...');
+        showToast('\u{1F504} \u6b63\u5728\u4ece\u4e91\u7aef\u52a0\u8f7d\uff08\u91cd\u8bd53\u6b21\uff09...');
         try {
             data = await cloudLoad();
-        } catch(e) { data = null; }
+        } catch(e) { data = null; cloudError = e.message; }
         if (data && data._loaded) {
             showToast('\u2705 \u5df2\u4ece\u4e91\u7aef\u540c\u6b65\u6570\u636e');
             // Cache to localStorage
@@ -770,8 +771,13 @@ async function loadUserData() {
                 showToast('\u26A0 \u672c\u5730\u7f13\u5b58\u5931\u8d25\uff0c\u6570\u636e\u8fc7\u5927');
             }
         } else {
+            cloudError = (data && data._error) ? data._error : (cloudError || '\u672a\u77e5\u9519\u8bef');
             var hasSynced = localStorage.getItem('knit_cloud_synced_' + S.currentUser);
-            if (!hasSynced) showToast('\u26A0 \u4e91\u7aef\u52a0\u8f7d\u5931\u8d25\uff0c\u4f7f\u7528\u672c\u5730\u6570\u636e');
+            if (!hasSynced) {
+                showToast('\u26A0 \u4e91\u7aef\u52a0\u8f7d\u5931\u8d25\uff1a' + cloudError + '\uff0c\u4f7f\u7528\u672c\u5730\u6570\u636e');
+            } else {
+                showToast('\u26A0 \u4e91\u7aef\u52a0\u8f7d\u5931\u8d25\uff1a' + cloudError + '\uff0c\u4f7f\u7528\u7f13\u5b58\u6570\u636e');
+            }
         }
     }
     // Fallback to localStorage
@@ -870,13 +876,36 @@ function fetchWithTimeout(url, options, timeoutMs) {
         .finally(function() { clearTimeout(timeoutId); });
 }
 
+// Retry helper with exponential backoff
+async function fetchWithRetry(fetchFn, maxRetries) {
+    maxRetries = maxRetries || 3;
+    var lastError = null;
+    for (var i = 0; i < maxRetries; i++) {
+        if (i > 0) {
+            var delay = Math.min(1000 * Math.pow(2, i - 1), 4000); // 1s, 2s, 4s
+            await new Promise(function(resolve) { setTimeout(resolve, delay); });
+        }
+        try {
+            var result = await fetchFn();
+            if (result !== null) return result;
+            lastError = new Error('empty result');
+        } catch(e) {
+            lastError = e;
+        }
+    }
+    throw lastError || new Error('fetch failed after ' + maxRetries + ' retries');
+}
+
 async function supaSelect(username) {
     var c = _supaCfg(); if (!c) return null;
     try {
-        var r = await fetchWithTimeout('https://' + c.ref + '.supabase.co/rest/v1/users?username=eq.' + encodeURIComponent(username) + '&select=*&limit=1', { headers: { 'apikey': c.key, 'Authorization': 'Bearer ' + c.key } });
-        if (!r.ok) return null;
-        var rows = await r.json();
-        return (rows && rows.length) ? rows[0] : null;
+        var row = await fetchWithRetry(async function() {
+            var r = await fetchWithTimeout('https://' + c.ref + '.supabase.co/rest/v1/users?username=eq.' + encodeURIComponent(username) + '&select=*&limit=1', { headers: { 'apikey': c.key, 'Authorization': 'Bearer ' + c.key } }, 15000);
+            if (!r.ok) return null;
+            var rows = await r.json();
+            return (rows && rows.length) ? rows[0] : null;
+        }, 3);
+        return row;
     } catch(e) { return null; }
 }
 async function supaInsert(username, passwordHash) {
@@ -939,13 +968,15 @@ async function cloudSave() {
     } catch(e) { return false; }
 }
 async function cloudLoad() {
-    if (!isCloudEnabled() || !S.currentUser) return { _loaded: false };
+    if (!isCloudEnabled() || !S.currentUser) return { _loaded: false, _error: 'not configured' };
     try {
         var row = await supaSelect(S.currentUser); 
-        if (!row) return { _loaded: false };
+        if (!row) return { _loaded: false, _error: 'user not found on cloud' };
         var d = row.data || {};
         return { _loaded: true, password: row.password, subPatterns: d.subPatterns || [], fullPatterns: d.fullPatterns || [], projects: d.projects || [] };
-    } catch(e) { return { _loaded: false }; }
+    } catch(e) { 
+        return { _loaded: false, _error: e.message || 'network error after retries' };
+    }
 }
 
 async function syncToCloud() {
@@ -1479,7 +1510,9 @@ async function saveToLibrary(type) {
     let ctx, w, h;
     if (type === 'sub') { if (!S.drawCtx) { showToast('\u8bf7\u5148\u521b\u5efa\u753b\u5e03'); return; } ctx = S.drawCtx; w = S.drawW; h = S.drawH; }
     else { if (!S.finalCtx) { showToast('\u8bf7\u5148\u521b\u5efa\u56fe\u7eb8'); return; } ctx = S.finalCtx; w = S.finalW; h = S.finalH; }
-    const name = prompt('\u8bf7\u8f93\u5165\u56fe\u7eb8\u540d\u79f0\uff1a', '\u56fe\u7eb8_' + Date.now().toString(16).slice(-4));
+    var now = new Date();
+    var dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0') + '_' + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0');
+    const name = prompt('\u8bf7\u8f93\u5165\u56fe\u7eb8\u540d\u79f0\uff1a', '\u56fe\u7eb8_' + dateStr);
     if (!name) return;
     const pat = { name, width: w, height: h, imageData: serializeImageData(ctx.getImageData(0, 0, w, h)), createdAt: new Date().toISOString() };
     if (type === 'sub') S.subPatterns.push(pat); else S.fullPatterns.push(pat);
