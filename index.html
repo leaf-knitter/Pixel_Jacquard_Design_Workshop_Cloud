@@ -1,8 +1,6 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!DOCTYPE html><html lang="zh-CN"><head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>像素提花设计工坊</title>
     <style>
         :root {
@@ -310,7 +308,7 @@
         .ref-remove { font-size: 11px; color: #c62828; background: none; border: none; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
         .ref-remove:hover { background: #ffebee; }
     </style>
-</head>
+<script src="https://www.kimi.com/sdk-seed.js" defer=""></script></head>
 <body>
 
 <!-- Auth Modal -->
@@ -318,37 +316,37 @@
     <div class="modal">
         <h2>像素提花设计工坊</h2>
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchAuthTab('login')">登录</button>
-            <button class="tab-btn" onclick="switchAuthTab('register')">注册</button>
+            <button class="tab-btn active" onclick="switchAuthTab(&#39;login&#39;)">登录</button>
+            <button class="tab-btn" onclick="switchAuthTab(&#39;register&#39;)">注册</button>
         </div>
         <div id="loginForm">
-            <div class="form-group"><label>用户名</label><input type="text" id="loginUser" placeholder="请输入用户名"></div>
-            <div class="form-group"><label>密码</label><input type="password" id="loginPass" placeholder="请输入密码" onkeydown="if(event.key==='Enter')handleLogin()"></div>
+            <div class="form-group"><label>用户名</label><input type="text" id="loginUser" placeholder="请输入用户名"/></div>
+            <div class="form-group"><label>密码</label><input type="password" id="loginPass" placeholder="请输入密码" onkeydown="if(event.key===&#39;Enter&#39;)handleLogin()"/></div>
             <button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="handleLogin()">登录</button>
         </div>
         <div id="regForm" style="display:none;">
-            <div class="form-group"><label>用户名</label><input type="text" id="regUser" placeholder="请输入用户名"></div>
-            <div class="form-group"><label>密码</label><input type="password" id="regPass" placeholder="请输入密码"></div>
-            <div class="form-group"><label>确认密码</label><input type="password" id="regConfirm" placeholder="请再次输入密码" onkeydown="if(event.key==='Enter')handleRegister()"></div>
+            <div class="form-group"><label>用户名</label><input type="text" id="regUser" placeholder="请输入用户名"/></div>
+            <div class="form-group"><label>密码</label><input type="password" id="regPass" placeholder="请输入密码"/></div>
+            <div class="form-group"><label>确认密码</label><input type="password" id="regConfirm" placeholder="请再次输入密码" onkeydown="if(event.key===&#39;Enter&#39;)handleRegister()"/></div>
             <button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="handleRegister()">注册</button>
         </div>
         <!-- Cloud Config Toggle -->
         <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--borderc);">
             <button class="btn btn-outline btn-xs" style="width:100%;" onclick="toggleCloudConfig()" id="cloudToggleBtn">
-                &#x2601; 云端存储配置 (可选)
+                ☁ 云端存储配置 (可选)
             </button>
             <div id="cloudConfigPanel" style="display:none;margin-top:12px;">
                 <p style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.6;">
-                    <b>三步完成配置：</b><br>
-                    1. <a href="https://supabase.com/dashboard/sign-up" target="_blank" style="color:var(--p3);">注册 Supabase</a> 并创建项目<br>
-                    2. 在 SQL Editor 中 <a href="#" onclick="showSqlHelp();return false;" style="color:var(--p3);">执行建表语句</a><br>
+                    <b>三步完成配置：</b><br/>
+                    1. <a href="https://supabase.com/dashboard/sign-up" target="_blank" style="color:var(--p3);">注册 Supabase</a> 并创建项目<br/>
+                    2. 在 SQL Editor 中 <a href="#" onclick="showSqlHelp();return false;" style="color:var(--p3);">执行建表语句</a><br/>
                     3. 填入下方的 Project Ref 和 Anon Key
                 </p>
-                <div class="form-group"><label>Project Ref</label><input type="text" id="cloudProjectId" placeholder="如: abcdefghijklmnop" style="font-size:12px;"></div>
-                <div class="form-group"><label>Anon Key</label><input type="text" id="cloudApiKey" placeholder="如: eyJhbGciOiJIUzI1NiIs..." style="font-size:11px;"></div>
+                <div class="form-group"><label>Project Ref</label><input type="text" id="cloudProjectId" placeholder="如: abcdefghijklmnop" style="font-size:12px;"/></div>
+                <div class="form-group"><label>Anon Key</label><input type="text" id="cloudApiKey" placeholder="如: eyJhbGciOiJIUzI1NiIs..." style="font-size:11px;"/></div>
                 <div style="display:flex;gap:8px;">
-                    <button class="btn btn-primary btn-sm" style="flex:1;" onclick="testCloudConnection()">&#x1F50C; 测试连接</button>
-                    <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="saveCloudConfig()">&#x1F4BE; 保存配置</button>
+                    <button class="btn btn-primary btn-sm" style="flex:1;" onclick="testCloudConnection()">🔌 测试连接</button>
+                    <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="saveCloudConfig()">💾 保存配置</button>
                 </div>
                 <p id="cloudStatus" style="font-size:12px;margin-top:8px;text-align:center;white-space:pre-wrap;line-height:1.5;"></p>
                 <div id="sqlHelp" style="display:none;margin-top:12px;padding:12px;background:#f5f5f5;border-radius:8px;font-size:11px;font-family:monospace;white-space:pre-wrap;color:#333;border:1px solid #ddd;"></div>
@@ -361,7 +359,7 @@
 <div id="projectModal" class="modal-overlay hidden">
     <div class="modal" style="max-width:500px;">
         <h2 id="projModalTitle">保存项目</h2>
-        <div class="form-group"><label>项目名称</label><input type="text" id="projNameInput" placeholder="输入项目名称"></div>
+        <div class="form-group"><label>项目名称</label><input type="text" id="projNameInput" placeholder="输入项目名称"/></div>
         <div id="projListSection">
             <label style="display:block;margin-bottom:8px;font-size:13px;color:var(--text2);">已有项目</label>
             <div class="project-list" id="projectList"></div>
@@ -376,38 +374,38 @@
 <!-- Top Bar -->
 <div class="top-bar">
     <div class="logo">
-        <div class="logo-icon">&#x1F9F5;</div>
+        <div class="logo-icon">🧵</div>
         <span>像素提花设计工坊</span>
     </div>
     <div class="user-info" id="userInfo" style="display:none;">
         <span id="userDisplayName" style="display:none;"></span>
         <div class="user-avatar" id="userAvatar">U</div>
-        <button class="btn btn-secondary btn-sm" id="syncBtn" onclick="syncToCloud()" title="同步数据到云端" style="display:none;">&#x2601; 同步</button>
+        <button class="btn btn-secondary btn-sm" id="syncBtn" onclick="syncToCloud()" title="同步数据到云端" style="display:none;">☁ 同步</button>
         <button class="btn btn-secondary btn-sm" onclick="logout()">退出</button>
     </div>
 </div>
 
 <!-- Nav Bar -->
 <nav class="nav-bar" id="navBar" style="display:none;">
-    <button class="nav-btn active" data-tab="draw" onclick="switchTab('draw')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/></svg>
+    <button class="nav-btn active" data-tab="draw" onclick="switchTab(&#39;draw&#39;)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path></svg>
         子图绘制
     </button>
-    <button class="nav-btn" data-tab="arrange" onclick="switchTab('arrange')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    <button class="nav-btn" data-tab="arrange" onclick="switchTab(&#39;arrange&#39;)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg>
         子图拼接
     </button>
-    <button class="nav-btn" data-tab="library" onclick="switchTab('library')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+    <button class="nav-btn" data-tab="library" onclick="switchTab(&#39;library&#39;)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path></svg>
         图纸库
     </button>
     <div class="nav-divider"></div>
-    <button class="nav-btn" onclick="openProjectModal('save')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+    <button class="nav-btn" onclick="openProjectModal(&#39;save&#39;)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
         保存项目
     </button>
-    <button class="nav-btn" onclick="openProjectModal('load')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+    <button class="nav-btn" onclick="openProjectModal(&#39;load&#39;)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"></path></svg>
         导入项目
     </button>
 </nav>
@@ -417,62 +415,62 @@
     <div class="container" id="app">
         <!-- Auth placeholder -->
         <div id="authPlaceholder" class="auth-content">
-            <div style="width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,var(--p),var(--p3));display:flex;align-items:center;justify-content:center;color:white;font-size:2rem;margin:0 auto 16px;">&#x1F9F5;</div>
+            <div style="width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,var(--p),var(--p3));display:flex;align-items:center;justify-content:center;color:white;font-size:2rem;margin:0 auto 16px;">🧵</div>
             <h2>欢迎使用像素提花设计工坊</h2>
-            <p>请先登录或注册账号以开始使用。<br>您可以绘制像素子图、拼接完整图纸，并管理您的设计作品。</p>
-            <button class="btn btn-primary" onclick="document.getElementById('authModal').classList.remove('hidden')" style="padding:12px 32px;font-size:16px;">登录 / 注册</button>
+            <p>请先登录或注册账号以开始使用。<br/>您可以绘制像素子图、拼接完整图纸，并管理您的设计作品。</p>
+            <button class="btn btn-primary" onclick="document.getElementById(&#39;authModal&#39;).classList.remove(&#39;hidden&#39;)" style="padding:12px 32px;font-size:16px;">登录 / 注册</button>
         </div>
 
         <!-- Draw Tab -->
         <div id="tab-draw" class="tab-content anim-fade">
             <div class="panel">
-                <div class="panel-title">&#x1F3A8; 画布设置</div>
+                <div class="panel-title">🎨 画布设置</div>
                 <div class="row">
-                    <div class="input-group"><label>像素宽</label><input type="number" class="input" id="drawW" value="20" min="1" max="100"></div>
-                    <div class="input-group"><label>像素高</label><input type="number" class="input" id="drawH" value="20" min="1" max="100"></div>
+                    <div class="input-group"><label>像素宽</label><input type="number" class="input" id="drawW" value="20" min="1" max="100"/></div>
+                    <div class="input-group"><label>像素高</label><input type="number" class="input" id="drawH" value="20" min="1" max="100"/></div>
                     <div class="input-group"><label>比例</label>
-                        <input type="number" class="input input-wide" id="pxW" value="1" min="0.1" max="10" step="0.1">
+                        <input type="number" class="input input-wide" id="pxW" value="1" min="0.1" max="10" step="0.1"/>
                         <span style="color:var(--text2);font-size:13px;">:</span>
-                        <input type="number" class="input input-wide" id="pxH" value="1" min="0.1" max="10" step="0.1">
+                        <input type="number" class="input input-wide" id="pxH" value="1" min="0.1" max="10" step="0.1"/>
                     </div>
                     <div class="ml-auto" style="display:flex;gap:6px;">
-                        <button class="btn btn-primary btn-sm" onclick="initDrawCanvas()">&#x2795; 创建画布</button>
-                        <button class="btn btn-outline btn-sm" onclick="clearDrawCanvas()">&#x1F5D1; 清空</button>
-                        <button class="btn btn-primary btn-sm" onclick="saveToLibrary('sub')">&#x1F4BE; 保存子图</button>
+                        <button class="btn btn-primary btn-sm" onclick="initDrawCanvas()">➕ 创建画布</button>
+                        <button class="btn btn-outline btn-sm" onclick="clearDrawCanvas()">🗑 清空</button>
+                        <button class="btn btn-primary btn-sm" onclick="saveToLibrary(&#39;sub&#39;)">💾 保存子图</button>
                     </div>
                 </div>
             </div>
             <div class="panel">
-                <div class="panel-title">&#x1F58C; 绘制工具</div>
+                <div class="panel-title">🖌 绘制工具</div>
                 <div class="tools">
-                    <button class="tool-btn active" id="tool-brush" onclick="setDrawTool('brush')">&#x270F; <span class="tool-label">画笔</span></button>
-                    <button class="tool-btn" id="tool-eraser" onclick="setDrawTool('eraser')">&#x1F9F9; <span class="tool-label">橡皮</span></button>
-                    <button class="tool-btn" id="tool-picker" onclick="setDrawTool('picker')">&#x1F4A7; <span class="tool-label">取色</span></button>
-                    <button class="tool-btn" id="tool-fill" onclick="setDrawTool('fill')">&#x1FAA3; <span class="tool-label">填充</span></button>
+                    <button class="tool-btn active" id="tool-brush" onclick="setDrawTool(&#39;brush&#39;)">✏ <span class="tool-label">画笔</span></button>
+                    <button class="tool-btn" id="tool-eraser" onclick="setDrawTool(&#39;eraser&#39;)">🧹 <span class="tool-label">橡皮</span></button>
+                    <button class="tool-btn" id="tool-picker" onclick="setDrawTool(&#39;picker&#39;)">💧 <span class="tool-label">取色</span></button>
+                    <button class="tool-btn" id="tool-fill" onclick="setDrawTool(&#39;fill&#39;)">🪣 <span class="tool-label">填充</span></button>
                     <div class="tool-divider"></div>
-                    <button class="tool-btn" onclick="undoDraw()">&#x21A9; <span class="tool-label">撤销</span></button>
-                    <button class="tool-btn" onclick="redoDraw()">&#x21AA; <span class="tool-label">重做</span></button>
+                    <button class="tool-btn" onclick="undoDraw()">↩ <span class="tool-label">撤销</span></button>
+                    <button class="tool-btn" onclick="redoDraw()">↪ <span class="tool-label">重做</span></button>
                     <div class="tool-divider"></div>
-                    <button class="tool-btn active" id="gridToggle" onclick="toggleGrid()">&#x25A6; <span class="tool-label">网格</span></button>
-                    <button class="tool-btn" onclick="document.getElementById('refFileInput').click()">&#x1F5BC; <span class="tool-label">参考图</span></button>
-                    <input type="file" id="refFileInput" style="display:none" accept="image/*" onchange="handleRefFile(event)">
+                    <button class="tool-btn active" id="gridToggle" onclick="toggleGrid()">▦ <span class="tool-label">网格</span></button>
+                    <button class="tool-btn" onclick="document.getElementById(&#39;refFileInput&#39;).click()">🖼 <span class="tool-label">参考图</span></button>
+                    <input type="file" id="refFileInput" style="display:none" accept="image/*" onchange="handleRefFile(event)"/>
                 </div>
-                <div class="panel-title">&#x1F3A8; 调色板</div>
+                <div class="panel-title">🎨 调色板</div>
                 <div class="palette" id="drawPalette"></div>
             </div>
             <div class="panel">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                    <div class="panel-title" style="margin:0;">&#x1F4D0; 绘制区域</div>
+                    <div class="panel-title" style="margin:0;">📐 绘制区域</div>
                     <button id="refToggleBtn" class="tool-btn" style="display:none;padding:4px 8px;font-size:12px;" onclick="toggleRefImage()">
-                        &#x1F441; <span id="refToggleText">隐藏参考</span>
+                        👁 <span id="refToggleText">隐藏参考</span>
                     </button>
                 </div>
                 <div class="canvas-scroll-container" id="drawCanvasWrapper">
-                    <div class="empty-state"><div style="font-size:3rem;margin-bottom:8px;opacity:0.5;">&#x1F3A8;</div><div>点击"创建画布"开始绘制</div></div>
+                    <div class="empty-state"><div style="font-size:3rem;margin-bottom:8px;opacity:0.5;">🎨</div><div>点击&#34;创建画布&#34;开始绘制</div></div>
                 </div>
                 <div class="ref-bar" id="refBar" style="display:none;">
-                    <span class="ref-indicator">&#x1F5BC; 参考图已加载（底层 30% 透明度）</span>
-                    <button class="ref-remove" onclick="removeRefImage()">&#x2715; 移除</button>
+                    <span class="ref-indicator">🖼 参考图已加载（底层 30% 透明度）</span>
+                    <button class="ref-remove" onclick="removeRefImage()">✕ 移除</button>
                 </div>
             </div>
         </div>
@@ -480,51 +478,51 @@
         <!-- Arrange Tab -->
         <div id="tab-arrange" class="tab-content anim-fade">
             <div class="panel">
-                <div class="panel-title">&#x1F4D0; 最终图纸设置</div>
+                <div class="panel-title">📐 最终图纸设置</div>
                 <div class="row">
-                    <div class="input-group"><label>图纸宽</label><input type="number" class="input" id="finalW" value="60" min="1" max="200"></div>
-                    <div class="input-group"><label>图纸高</label><input type="number" class="input" id="finalH" value="60" min="1" max="200"></div>
+                    <div class="input-group"><label>图纸宽</label><input type="number" class="input" id="finalW" value="60" min="1" max="200"/></div>
+                    <div class="input-group"><label>图纸高</label><input type="number" class="input" id="finalH" value="60" min="1" max="200"/></div>
                     <div class="ml-auto" style="display:flex;gap:6px;">
-                        <button class="btn btn-primary btn-sm" onclick="initFinalCanvas()">&#x2795; 创建图纸</button>
-                        <button class="btn btn-outline btn-sm" onclick="clearFinalCanvas()">&#x1F5D1; 清空</button>
-                        <button class="btn btn-primary btn-sm" onclick="saveToLibrary('full')">&#x1F4BE; 保存图纸</button>
+                        <button class="btn btn-primary btn-sm" onclick="initFinalCanvas()">➕ 创建图纸</button>
+                        <button class="btn btn-outline btn-sm" onclick="clearFinalCanvas()">🗑 清空</button>
+                        <button class="btn btn-primary btn-sm" onclick="saveToLibrary(&#39;full&#39;)">💾 保存图纸</button>
                     </div>
                 </div>
             </div>
             <div class="panel">
-                <div class="panel-title">&#x25A6; 复制排列</div>
+                <div class="panel-title">▦ 复制排列</div>
                 <div class="row">
-                    <div class="input-group"><label>横向</label><input type="number" class="input" id="rx" value="1" min="1" max="50"></div>
-                    <div class="input-group"><label>纵向</label><input type="number" class="input" id="ry" value="1" min="1" max="50"></div>
+                    <div class="input-group"><label>横向</label><input type="number" class="input" id="rx" value="1" min="1" max="50"/></div>
+                    <div class="input-group"><label>纵向</label><input type="number" class="input" id="ry" value="1" min="1" max="50"/></div>
                     <div class="ml-auto" style="display:flex;gap:6px;">
-                        <button class="btn btn-outline btn-sm" onclick="repeatPattern('horizontal')">&#x27A1; 横向</button>
-                        <button class="btn btn-outline btn-sm" onclick="repeatPattern('vertical')">&#x2B07; 纵向</button>
-                        <button class="btn btn-outline btn-sm" onclick="repeatPattern('both')">&#x25A6; 双向</button>
+                        <button class="btn btn-outline btn-sm" onclick="repeatPattern(&#39;horizontal&#39;)">➡ 横向</button>
+                        <button class="btn btn-outline btn-sm" onclick="repeatPattern(&#39;vertical&#39;)">⬇ 纵向</button>
+                        <button class="btn btn-outline btn-sm" onclick="repeatPattern(&#39;both&#39;)">▦ 双向</button>
                     </div>
                 </div>
                 <p id="selectedLabel" style="font-size:12px;color:var(--text2);margin-top:8px;"></p>
             </div>
             <div class="panel">
-                <div class="panel-title">&#x1F9E9; 点击插入（选中子图后在图纸上点击插入位置）</div>
+                <div class="panel-title">🧩 点击插入（选中子图后在图纸上点击插入位置）</div>
                 <div class="pool" id="subPatternPool"><p style="color:var(--text2);font-size:13px;text-align:center;width:100%;">子图库为空</p></div>
             </div>
             <div class="panel">
-                <div class="panel-title">&#x1F58C; 画笔修改</div>
+                <div class="panel-title">🖌 画笔修改</div>
                 <div class="tools">
-                    <button class="tool-btn active" id="ftool-brush" onclick="setFinalTool('brush')">&#x270F; <span class="tool-label">画笔</span></button>
-                    <button class="tool-btn" id="ftool-eraser" onclick="setFinalTool('eraser')">&#x1F9F9; <span class="tool-label">橡皮</span></button>
-                    <button class="tool-btn" id="ftool-picker" onclick="setFinalTool('picker')">&#x1F4A7; <span class="tool-label">取色</span></button>
+                    <button class="tool-btn active" id="ftool-brush" onclick="setFinalTool(&#39;brush&#39;)">✏ <span class="tool-label">画笔</span></button>
+                    <button class="tool-btn" id="ftool-eraser" onclick="setFinalTool(&#39;eraser&#39;)">🧹 <span class="tool-label">橡皮</span></button>
+                    <button class="tool-btn" id="ftool-picker" onclick="setFinalTool(&#39;picker&#39;)">💧 <span class="tool-label">取色</span></button>
                     <div class="tool-divider"></div>
-                    <button class="tool-btn" onclick="undoFinal()">&#x21A9; <span class="tool-label">撤销</span></button>
+                    <button class="tool-btn" onclick="undoFinal()">↩ <span class="tool-label">撤销</span></button>
                     <div class="tool-divider"></div>
-                    <button class="tool-btn active" id="fgridToggle" onclick="toggleFinalGrid()">&#x25A6; <span class="tool-label">网格</span></button>
+                    <button class="tool-btn active" id="fgridToggle" onclick="toggleFinalGrid()">▦ <span class="tool-label">网格</span></button>
                 </div>
                 <div class="palette" id="finalPalette"></div>
             </div>
             <div class="panel">
-                <div class="panel-title">&#x1F5BC; 最终图纸</div>
+                <div class="panel-title">🖼 最终图纸</div>
                 <div class="canvas-scroll-container" id="finalCanvasWrapper">
-                    <div class="empty-state"><div style="font-size:3rem;margin-bottom:8px;opacity:0.5;">&#x1F9E9;</div><div>点击"创建图纸"开始拼接</div></div>
+                    <div class="empty-state"><div style="font-size:3rem;margin-bottom:8px;opacity:0.5;">🧩</div><div>点击&#34;创建图纸&#34;开始拼接</div></div>
                 </div>
             </div>
         </div>
@@ -532,27 +530,27 @@
         <!-- Library Tab -->
         <div id="tab-library" class="tab-content anim-fade">
             <div class="panel">
-                <div class="panel-title">&#x1F4DA; 图纸库管理</div>
+                <div class="panel-title">📚 图纸库管理</div>
                 <div class="tools">
-                    <button class="tool-btn active" id="lib-tab-sub" onclick="switchLibTab('sub')">&#x1F3A8; <span class="tool-label">子图库</span></button>
-                    <button class="tool-btn" id="lib-tab-full" onclick="switchLibTab('full')">&#x1F5BC; <span class="tool-label">完整图纸</span></button>
+                    <button class="tool-btn active" id="lib-tab-sub" onclick="switchLibTab(&#39;sub&#39;)">🎨 <span class="tool-label">子图库</span></button>
+                    <button class="tool-btn" id="lib-tab-full" onclick="switchLibTab(&#39;full&#39;)">🖼 <span class="tool-label">完整图纸</span></button>
                 </div>
             </div>
             <div class="panel">
-                <div class="panel-title" id="libraryTitle">&#x1F3A8; 子图库</div>
+                <div class="panel-title" id="libraryTitle">🎨 子图库</div>
                 <div class="lib-grid" id="libraryGrid">
-                    <div class="empty-state"><div style="font-size:3rem;margin-bottom:8px;opacity:0.5;">&#x1F4ED;</div><div>暂无图纸，快去绘制吧！</div></div>
+                    <div class="empty-state"><div style="font-size:3rem;margin-bottom:8px;opacity:0.5;">📭</div><div>暂无图纸，快去绘制吧！</div></div>
                 </div>
             </div>
             <div class="panel" id="editPanel" style="display:none;">
-                <div class="panel-title">&#x270F; 像素编辑</div>
+                <div class="panel-title">✏ 像素编辑</div>
                 <div class="tools">
-                    <button class="tool-btn active" id="etool-brush" onclick="setEditTool('brush')">&#x270F; <span class="tool-label">画笔</span></button>
-                    <button class="tool-btn" id="etool-eraser" onclick="setEditTool('eraser')">&#x1F9F9; <span class="tool-label">橡皮</span></button>
-                    <button class="tool-btn" id="etool-picker" onclick="setEditTool('picker')">&#x1F4A7; <span class="tool-label">取色</span></button>
+                    <button class="tool-btn active" id="etool-brush" onclick="setEditTool(&#39;brush&#39;)">✏ <span class="tool-label">画笔</span></button>
+                    <button class="tool-btn" id="etool-eraser" onclick="setEditTool(&#39;eraser&#39;)">🧹 <span class="tool-label">橡皮</span></button>
+                    <button class="tool-btn" id="etool-picker" onclick="setEditTool(&#39;picker&#39;)">💧 <span class="tool-label">取色</span></button>
                     <div class="tool-divider"></div>
-                    <button class="tool-btn active" id="egridToggle" onclick="toggleEditGrid()">&#x25A6; <span class="tool-label">网格</span></button>
-                    <button class="btn btn-primary btn-sm ml-auto" onclick="saveEdit()">&#x1F4BE; 保存修改</button>
+                    <button class="tool-btn active" id="egridToggle" onclick="toggleEditGrid()">▦ <span class="tool-label">网格</span></button>
+                    <button class="btn btn-primary btn-sm ml-auto" onclick="saveEdit()">💾 保存修改</button>
                 </div>
                 <div class="palette" id="editPalette"></div>
                 <div class="canvas-scroll-container" id="editCanvasWrapper" style="margin-top:12px;"></div>
@@ -564,7 +562,7 @@
 <!-- Footer -->
 <footer class="footer-bar">
     <span>Made with</span>
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="red" stroke="none" style="opacity:0.7;"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="red" stroke="none" style="opacity:0.7;"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"></path></svg>
     <span>by leaf-knitter | 2026 像素提花设计工坊</span>
 </footer>
 
@@ -625,6 +623,24 @@ function serializeImageData(imgData) {
 }
 function deserializeImageData(s) {
     return new ImageData(new Uint8ClampedArray(s.data), s.width, s.height);
+}
+// Ensure pattern array is JSON-serializable by converting ImageData objects to plain objects
+function serializePatternsForStorage(patterns) {
+    if (!patterns || !patterns.length) return [];
+    return patterns.map(function(p) {
+        var imageDataObj = p.imageData;
+        // If imageData is an ImageData instance (has Uint8ClampedArray data), serialize it
+        if (imageDataObj && imageDataObj.data && typeof imageDataObj.data.length === 'number' && !(Array.isArray(imageDataObj.data))) {
+            imageDataObj = { data: Array.from(imageDataObj.data), width: imageDataObj.width, height: imageDataObj.height };
+        }
+        return {
+            name: p.name,
+            width: p.width,
+            height: p.height,
+            imageData: imageDataObj,
+            createdAt: p.createdAt
+        };
+    });
 }
 function showToast(msg) {
     const t = document.getElementById('toast');
@@ -956,9 +972,12 @@ async function cloudSave() {
     try {
         var row = await supaSelect(S.currentUser);
         var remote = (row && row.data) ? row.data : {};
+        // Serialize local patterns to plain objects before merging (remote is already plain JSON)
+        var localSubSerialized = serializePatternsForStorage(S.subPatterns);
+        var localFullSerialized = serializePatternsForStorage(S.fullPatterns);
         var merged = {
-            subPatterns: _mergePatterns(S.subPatterns, remote.subPatterns),
-            fullPatterns: _mergePatterns(S.fullPatterns, remote.fullPatterns),
+            subPatterns: _mergePatterns(localSubSerialized, remote.subPatterns),
+            fullPatterns: _mergePatterns(localFullSerialized, remote.fullPatterns),
             projects: _mergePatterns(S.projects, remote.projects)
         };
         var result = await _cloudWrite(merged);
@@ -1016,9 +1035,12 @@ async function cloudSaveDetailed() {
     try {
         var row = await supaSelect(S.currentUser);
         var remote = (row && row.data) ? row.data : {};
+        // Serialize local patterns to plain objects before merging (remote is already plain JSON)
+        var localSubSerialized = serializePatternsForStorage(S.subPatterns);
+        var localFullSerialized = serializePatternsForStorage(S.fullPatterns);
         var merged = {
-            subPatterns: _mergePatterns(S.subPatterns, remote.subPatterns),
-            fullPatterns: _mergePatterns(S.fullPatterns, remote.fullPatterns),
+            subPatterns: _mergePatterns(localSubSerialized, remote.subPatterns),
+            fullPatterns: _mergePatterns(localFullSerialized, remote.fullPatterns),
             projects: _mergePatterns(S.projects, remote.projects)
         };
         return await _cloudWrite(merged);
@@ -1030,10 +1052,13 @@ async function cloudSaveDetailed() {
 
 async function saveToStorage() {
     if (!S.currentUser) return;
+    // Serialize patterns to ensure ImageData objects become plain JSON objects
+    var serializedSub = serializePatternsForStorage(S.subPatterns);
+    var serializedFull = serializePatternsForStorage(S.fullPatterns);
     // Always save to localStorage as backup
     try {
         localStorage.setItem('knit_data_' + S.currentUser, JSON.stringify({
-            subPatterns: S.subPatterns, fullPatterns: S.fullPatterns, projects: S.projects
+            subPatterns: serializedSub, fullPatterns: serializedFull, projects: S.projects
         }));
     } catch(e) {
         showToast('\u26A0 \u672c\u5730\u4fdd\u5b58\u5931\u8d25\uff1a\u6570\u636e\u8fc7\u5927\uff0c\u8bf7\u5220\u9664\u4e00\u4e9b\u56fe\u7eb8');
@@ -1733,5 +1758,6 @@ window.addEventListener('resize', () => {
 
 init();
 </script>
-</body>
-</html>
+
+
+</body></html>
